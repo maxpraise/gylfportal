@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_courses: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration_hours: number | null
+          id: string
+          is_published: boolean
+          order_index: number
+          thumbnail_url: string | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_published?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_published?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      academy_quizzes: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          passing_score: number
+          questions: Json
+          title: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          passing_score?: number
+          questions?: Json
+          title: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          passing_score?: number
+          questions?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_quizzes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           action: string
@@ -42,6 +116,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "activity_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connect_meetings: {
+        Row: {
+          attendees_count: number
+          created_at: string
+          currency: string | null
+          first_timers: number
+          id: string
+          image_urls: string[] | null
+          meeting_date: string
+          meeting_title: string
+          meeting_type: string
+          offering_amount: number | null
+          profile_id: string
+          summary: string | null
+        }
+        Insert: {
+          attendees_count?: number
+          created_at?: string
+          currency?: string | null
+          first_timers?: number
+          id?: string
+          image_urls?: string[] | null
+          meeting_date: string
+          meeting_title: string
+          meeting_type?: string
+          offering_amount?: number | null
+          profile_id: string
+          summary?: string | null
+        }
+        Update: {
+          attendees_count?: number
+          created_at?: string
+          currency?: string | null
+          first_timers?: number
+          id?: string
+          image_urls?: string[] | null
+          meeting_date?: string
+          meeting_title?: string
+          meeting_type?: string
+          offering_amount?: number | null
+          profile_id?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connect_meetings_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -78,6 +205,207 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      heart_reports: {
+        Row: {
+          category: Database["public"]["Enums"]["heart_category"]
+          city: string | null
+          country: string
+          created_at: string
+          event_date: string
+          id: string
+          image_urls: string[] | null
+          location_details: string | null
+          magazines_shared: number
+          outreach_name: string
+          profile_id: string
+          reach_impact: number
+          souls_data_url: string | null
+          souls_won: number
+          state: string | null
+          status: string
+          summary: string | null
+          testimonies: string | null
+          updated_at: string
+          youths_data_url: string | null
+          youths_incorporated: number
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["heart_category"]
+          city?: string | null
+          country: string
+          created_at?: string
+          event_date: string
+          id?: string
+          image_urls?: string[] | null
+          location_details?: string | null
+          magazines_shared?: number
+          outreach_name: string
+          profile_id: string
+          reach_impact?: number
+          souls_data_url?: string | null
+          souls_won?: number
+          state?: string | null
+          status?: string
+          summary?: string | null
+          testimonies?: string | null
+          updated_at?: string
+          youths_data_url?: string | null
+          youths_incorporated?: number
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["heart_category"]
+          city?: string | null
+          country?: string
+          created_at?: string
+          event_date?: string
+          id?: string
+          image_urls?: string[] | null
+          location_details?: string | null
+          magazines_shared?: number
+          outreach_name?: string
+          profile_id?: string
+          reach_impact?: number
+          souls_data_url?: string | null
+          souls_won?: number
+          state?: string | null
+          status?: string
+          summary?: string | null
+          testimonies?: string | null
+          updated_at?: string
+          youths_data_url?: string | null
+          youths_incorporated?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "heart_reports_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      otp_verifications: {
+        Row: {
+          attempts: number
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          otp_code: string
+          otp_type: string
+          phone: string | null
+          verified: boolean
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          otp_type?: string
+          phone?: string | null
+          verified?: boolean
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          otp_type?: string
+          phone?: string | null
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      partnerships: {
+        Row: {
+          amount: number
+          category: Database["public"]["Enums"]["giving_category"]
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          payment_method: string
+          profile_id: string
+          status: string
+          transaction_reference: string | null
+        }
+        Insert: {
+          amount: number
+          category: Database["public"]["Enums"]["giving_category"]
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method: string
+          profile_id: string
+          status?: string
+          transaction_reference?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: Database["public"]["Enums"]["giving_category"]
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          profile_id?: string
+          status?: string
+          transaction_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partnerships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_requests: {
+        Row: {
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_answered: boolean
+          prayer_count: number
+          profile_id: string
+          request: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_answered?: boolean
+          prayer_count?: number
+          profile_id: string
+          request: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_answered?: boolean
+          prayer_count?: number
+          profile_id?: string
+          request?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -152,6 +480,51 @@ export type Database = {
           },
         ]
       }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          completed_at: string
+          id: string
+          passed: boolean
+          profile_id: string
+          quiz_id: string
+          score: number
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string
+          id?: string
+          passed?: boolean
+          profile_id: string
+          quiz_id: string
+          score?: number
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string
+          id?: string
+          passed?: boolean
+          profile_id?: string
+          quiz_id?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_tracking: {
         Row: {
           created_at: string
@@ -209,6 +582,115 @@ export type Database = {
         }
         Relationships: []
       }
+      summit_reports: {
+        Row: {
+          attendees_count: number
+          city: string | null
+          country: string
+          created_at: string
+          description: string | null
+          event_date: string
+          id: string
+          image_urls: string[] | null
+          location: string
+          new_members: number
+          profile_id: string
+          souls_won: number
+          state: string | null
+          status: string
+          testimonies: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attendees_count?: number
+          city?: string | null
+          country: string
+          created_at?: string
+          description?: string | null
+          event_date: string
+          id?: string
+          image_urls?: string[] | null
+          location: string
+          new_members?: number
+          profile_id: string
+          souls_won?: number
+          state?: string | null
+          status?: string
+          testimonies?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attendees_count?: number
+          city?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          id?: string
+          image_urls?: string[] | null
+          location?: string
+          new_members?: number
+          profile_id?: string
+          souls_won?: number
+          state?: string | null
+          status?: string
+          testimonies?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summit_reports_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonies: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          is_approved: boolean
+          is_featured: boolean
+          profile_id: string
+          testimony: string
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          is_featured?: boolean
+          profile_id: string
+          testimony: string
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          is_featured?: boolean
+          profile_id?: string
+          testimony?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonies_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_by: string | null
@@ -255,6 +737,21 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "regional_leader" | "ambassador"
+      giving_category:
+        | "hslhs"
+        | "magazine"
+        | "gylf_missions_trips"
+        | "offerings"
+        | "gylf_conferences"
+        | "sponsor_gytv"
+        | "gylf_outreaches"
+        | "gylf_academy"
+      heart_category:
+        | "humanitarian"
+        | "evangelism"
+        | "arts"
+        | "representation"
+        | "technology"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -383,6 +880,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "regional_leader", "ambassador"],
+      giving_category: [
+        "hslhs",
+        "magazine",
+        "gylf_missions_trips",
+        "offerings",
+        "gylf_conferences",
+        "sponsor_gytv",
+        "gylf_outreaches",
+        "gylf_academy",
+      ],
+      heart_category: [
+        "humanitarian",
+        "evangelism",
+        "arts",
+        "representation",
+        "technology",
+      ],
     },
   },
 } as const
