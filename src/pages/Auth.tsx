@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { Globe, Users, TrendingUp, Shield } from 'lucide-react';
+import { Globe, Users, TrendingUp, Shield, ArrowLeft, Mail } from 'lucide-react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -25,6 +27,8 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+type SignupStep = 'form' | 'otp' | 'creating';
+
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,12 +42,26 @@ const Auth = () => {
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // OTP state
+  const [signupStep, setSignupStep] = useState<SignupStep>('form');
+  const [otpValue, setOtpValue] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     if (user && !isLoading) {
       navigate('/dashboard');
     }
   }, [user, isLoading, navigate]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +99,33 @@ const Auth = () => {
     setIsSubmitting(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const sendOTP = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { email, fullName },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Verification Code Sent',
+        description: `We've sent a 6-digit code to ${email}`,
+      });
+      setSignupStep('otp');
+      setResendCooldown(60);
+    } catch (error: any) {
+      toast({
+        title: 'Failed to Send Code',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSignUpInitiate = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     
@@ -97,26 +141,65 @@ const Auth = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    const { error } = await signUp(email, password, fullName, referralCode || undefined);
-    
-    if (error) {
-      const errorMessage = error.message.includes('already registered')
-        ? 'An account with this email already exists. Please sign in instead.'
-        : error.message;
-      
-      toast({
-        title: 'Registration Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Welcome to GYLF!',
-        description: 'Your account has been created successfully.',
-      });
+    await sendOTP();
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otpValue.length !== 6) {
+      setOtpError('Please enter the complete 6-digit code');
+      return;
     }
-    setIsSubmitting(false);
+
+    setIsSubmitting(true);
+    setOtpError('');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { email, otpCode: otpValue },
+      });
+
+      if (error) throw error;
+
+      if (data.verified) {
+        setSignupStep('creating');
+        
+        // Now create the account
+        const { error: signUpError } = await signUp(email, password, fullName, referralCode || undefined);
+        
+        if (signUpError) {
+          const errorMessage = signUpError.message.includes('already registered')
+            ? 'An account with this email already exists. Please sign in instead.'
+            : signUpError.message;
+          
+          toast({
+            title: 'Registration Failed',
+            description: errorMessage,
+            variant: 'destructive',
+          });
+          setSignupStep('form');
+        } else {
+          toast({
+            title: 'Welcome to GYLF!',
+            description: 'Your account has been created successfully.',
+          });
+        }
+      }
+    } catch (error: any) {
+      setOtpError(error.message || 'Invalid verification code');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
+    await sendOTP();
+  };
+
+  const handleBackToForm = () => {
+    setSignupStep('form');
+    setOtpValue('');
+    setOtpError('');
   };
 
   if (isLoading) {
@@ -188,141 +271,221 @@ const Auth = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-foreground">GYLF Portal</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Sign in to your account or create a new one
+              {signupStep === 'otp' 
+                ? 'Enter the verification code sent to your email'
+                : signupStep === 'creating'
+                ? 'Creating your account...'
+                : 'Sign in to your account or create a new one'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={errors.email ? 'border-destructive' : ''}
-                    />
-                    {errors.email && (
-                      <p className="text-sm text-destructive">{errors.email}</p>
-                    )}
+            {signupStep === 'otp' ? (
+              <div className="space-y-6">
+                <button
+                  onClick={handleBackToForm}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </button>
+                
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="bg-primary/10 p-4 rounded-full">
+                    <Mail className="h-8 w-8 text-primary" />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={errors.password ? 'border-destructive' : ''}
-                    />
-                    {errors.password && (
-                      <p className="text-sm text-destructive">{errors.password}</p>
-                    )}
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">We sent a code to</p>
+                    <p className="font-medium text-foreground">{email}</p>
                   </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting}
+                </div>
+                
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpValue}
+                    onChange={(value) => {
+                      setOtpValue(value);
+                      setOtpError('');
+                    }}
                   >
-                    {isSubmitting ? 'Signing in...' : 'Sign In'}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className={errors.fullName ? 'border-destructive' : ''}
-                    />
-                    {errors.fullName && (
-                      <p className="text-sm text-destructive">{errors.fullName}</p>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                
+                {otpError && (
+                  <p className="text-sm text-destructive text-center">{otpError}</p>
+                )}
+                
+                <Button 
+                  onClick={handleVerifyOTP}
+                  className="w-full"
+                  disabled={isSubmitting || otpValue.length !== 6}
+                >
+                  {isSubmitting ? 'Verifying...' : 'Verify & Create Account'}
+                </Button>
+                
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Didn't receive the code?{' '}
+                    {resendCooldown > 0 ? (
+                      <span className="text-foreground">Resend in {resendCooldown}s</span>
+                    ) : (
+                      <button
+                        onClick={handleResendOTP}
+                        className="text-primary hover:underline font-medium"
+                        disabled={isSubmitting}
+                      >
+                        Resend
+                      </button>
                     )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={errors.email ? 'border-destructive' : ''}
-                    />
-                    {errors.email && (
-                      <p className="text-sm text-destructive">{errors.email}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={errors.password ? 'border-destructive' : ''}
-                    />
-                    {errors.password && (
-                      <p className="text-sm text-destructive">{errors.password}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirm Password</Label>
-                    <Input
-                      id="signup-confirm"
-                      type="password"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={errors.confirmPassword ? 'border-destructive' : ''}
-                    />
-                    {errors.confirmPassword && (
-                      <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-referral">Referral Code (Optional)</Label>
-                    <Input
-                      id="signup-referral"
-                      type="text"
-                      placeholder="GYLF123ABC"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Creating Account...' : 'Create Account'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                  </p>
+                </div>
+              </div>
+            ) : signupStep === 'creating' ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Creating your account...</p>
+              </div>
+            ) : (
+              <Tabs defaultValue="signin">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="signin">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={errors.email ? 'border-destructive' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <Input
+                        id="signin-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={errors.password ? 'border-destructive' : ''}
+                      />
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password}</p>
+                      )}
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUpInitiate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className={errors.fullName ? 'border-destructive' : ''}
+                      />
+                      {errors.fullName && (
+                        <p className="text-sm text-destructive">{errors.fullName}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={errors.email ? 'border-destructive' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={errors.password ? 'border-destructive' : ''}
+                      />
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm">Confirm Password</Label>
+                      <Input
+                        id="signup-confirm"
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={errors.confirmPassword ? 'border-destructive' : ''}
+                      />
+                      {errors.confirmPassword && (
+                        <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-referral">Referral Code (Optional)</Label>
+                      <Input
+                        id="signup-referral"
+                        type="text"
+                        placeholder="GYLF123ABC"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Sending Code...' : 'Continue'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>
