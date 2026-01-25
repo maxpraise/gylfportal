@@ -28,6 +28,11 @@ import {
   Shield,
   UserPlus,
   FileText,
+  Heart,
+  Cloud,
+  MessageSquare,
+  HelpCircle,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,9 +64,20 @@ const navigation: NavGroup[] = [
     ],
   },
   {
-    title: 'Resources',
+    title: 'Programs',
     items: [
-      { icon: BookOpen, label: 'Resource Center', path: '/dashboard/resources' },
+      { icon: Globe, label: 'GYLF Connect', path: '/dashboard/connect' },
+      { icon: Heart, label: 'HEART Initiative', path: '/dashboard/heart' },
+      { icon: BookOpen, label: 'GYLF Academy', path: '/dashboard/academy' },
+      { icon: Calendar, label: 'Meetings', path: '/dashboard/meetings' },
+    ],
+  },
+  {
+    title: 'Community',
+    items: [
+      { icon: Cloud, label: 'Prayer Cloud', path: '/dashboard/prayer' },
+      { icon: MessageSquare, label: 'Share Testimony', path: '/dashboard/testimony' },
+      { icon: HelpCircle, label: 'Help & FAQ', path: '/dashboard/faq' },
     ],
   },
   {
