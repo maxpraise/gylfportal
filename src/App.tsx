@@ -15,6 +15,13 @@ import Settings from "./pages/Settings";
 import ManageUsers from "./pages/admin/ManageUsers";
 import Reports from "./pages/admin/Reports";
 import NotFound from "./pages/NotFound";
+import GYLFConnect from "./pages/GYLFConnect";
+import HeartInitiative from "./pages/HeartInitiative";
+import GYLFAcademy from "./pages/GYLFAcademy";
+import GYLFMeetings from "./pages/GYLFMeetings";
+import PrayerCloud from "./pages/PrayerCloud";
+import ShareTestimony from "./pages/ShareTestimony";
+import FAQ from "./pages/FAQ";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +64,13 @@ const AppRoutes = () => {
         <Route path="invite" element={<Invite />} />
         <Route path="growth" element={<GrowthPath />} />
         <Route path="resources" element={<Resources />} />
+        <Route path="connect" element={<GYLFConnect />} />
+        <Route path="heart" element={<HeartInitiative />} />
+        <Route path="academy" element={<GYLFAcademy />} />
+        <Route path="meetings" element={<GYLFMeetings />} />
+        <Route path="prayer" element={<PrayerCloud />} />
+        <Route path="testimony" element={<ShareTestimony />} />
+        <Route path="faq" element={<FAQ />} />
         <Route path="settings" element={<Settings />} />
         <Route path="admin/users" element={<ManageUsers />} />
         <Route path="admin/reports" element={<Reports />} />
