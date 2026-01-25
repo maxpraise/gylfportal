@@ -152,6 +152,7 @@ const HeartInitiative = () => {
 
       // Insert report
       const { error } = await supabase.from('heart_reports').insert({
+        profile_id: profile.id,
         category: formData.category as 'arts' | 'evangelism' | 'humanitarian' | 'representation' | 'technology',
         outreach_name: formData.outreach_name,
         event_date: formData.event_date,
