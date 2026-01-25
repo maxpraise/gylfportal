@@ -110,6 +110,7 @@ const GYLFAcademy = () => {
 
     try {
       const { error } = await supabase.from('partnerships').insert({
+        profile_id: profile.id,
         amount: parseFloat(partnershipAmount),
         currency: 'USD',
         payment_method: paymentMethod,
