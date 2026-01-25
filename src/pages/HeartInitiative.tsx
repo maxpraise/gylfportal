@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +14,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
   Heart,
-  Users,
   Palette,
   Globe,
   Cpu,
@@ -26,6 +36,27 @@ import {
   Clock,
   Send,
 } from 'lucide-react';
+
+const heartReportSchema = z.object({
+  category: z.string().min(1, 'Please select a category'),
+  outreach_name: z.string().min(1, 'Outreach name is required').max(100, 'Name must be less than 100 characters'),
+  event_date: z.string().min(1, 'Event date is required'),
+  country: z.string().min(1, 'Country is required').max(100, 'Country must be less than 100 characters'),
+  state: z.string().max(100, 'State must be less than 100 characters').optional(),
+  city: z.string().max(100, 'City must be less than 100 characters').optional(),
+  location_details: z.string().max(255, 'Location details must be less than 255 characters').optional(),
+  reach_impact: z.string().min(1, 'People reached is required').refine(
+    (val) => !isNaN(parseInt(val)) && parseInt(val) >= 0,
+    'Must be a valid number'
+  ),
+  souls_won: z.string().optional(),
+  youths_incorporated: z.string().optional(),
+  magazines_shared: z.string().optional(),
+  testimonies: z.string().max(2000, 'Testimonies must be less than 2000 characters').optional(),
+  summary: z.string().max(2000, 'Summary must be less than 2000 characters').optional(),
+});
+
+type HeartReportFormData = z.infer<typeof heartReportSchema>;
 
 const categories = [
   { value: 'humanitarian', label: 'Humanitarian', icon: Heart, description: 'Charity, welfare, community support' },
@@ -54,29 +85,31 @@ const HeartInitiative = () => {
   const [reports, setReports] = useState<HeartReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    category: '',
-    outreach_name: '',
-    event_date: '',
-    country: '',
-    state: '',
-    city: '',
-    location_details: '',
-    reach_impact: '',
-    souls_won: '',
-    youths_incorporated: '',
-    magazines_shared: '',
-    testimonies: '',
-    summary: '',
-  });
-
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [soulsDataFile, setSoulsDataFile] = useState<File | null>(null);
   const [youthsDataFile, setYouthsDataFile] = useState<File | null>(null);
 
+  const form = useForm<HeartReportFormData>({
+    resolver: zodResolver(heartReportSchema),
+    defaultValues: {
+      category: '',
+      outreach_name: '',
+      event_date: '',
+      country: '',
+      state: '',
+      city: '',
+      location_details: '',
+      reach_impact: '',
+      souls_won: '',
+      youths_incorporated: '',
+      magazines_shared: '',
+      testimonies: '',
+      summary: '',
+    },
+  });
+
   // Fetch reports on mount
-  useState(() => {
+  useEffect(() => {
     const fetchReports = async () => {
       if (!profile?.id) return;
 
@@ -93,11 +126,7 @@ const HeartInitiative = () => {
     };
 
     fetchReports();
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, [profile?.id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -105,8 +134,7 @@ const HeartInitiative = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (formData: HeartReportFormData) => {
     if (!profile?.id) return;
 
     setIsSubmitting(true);
@@ -161,9 +189,9 @@ const HeartInitiative = () => {
         city: formData.city || null,
         location_details: formData.location_details || null,
         reach_impact: parseInt(formData.reach_impact) || 0,
-        souls_won: parseInt(formData.souls_won) || 0,
-        youths_incorporated: parseInt(formData.youths_incorporated) || 0,
-        magazines_shared: parseInt(formData.magazines_shared) || 0,
+        souls_won: parseInt(formData.souls_won || '0') || 0,
+        youths_incorporated: parseInt(formData.youths_incorporated || '0') || 0,
+        magazines_shared: parseInt(formData.magazines_shared || '0') || 0,
         testimonies: formData.testimonies || null,
         summary: formData.summary || null,
         image_urls: imageUrls,
@@ -179,24 +207,21 @@ const HeartInitiative = () => {
       });
 
       // Reset form
-      setFormData({
-        category: '',
-        outreach_name: '',
-        event_date: '',
-        country: '',
-        state: '',
-        city: '',
-        location_details: '',
-        reach_impact: '',
-        souls_won: '',
-        youths_incorporated: '',
-        magazines_shared: '',
-        testimonies: '',
-        summary: '',
-      });
+      form.reset();
       setSelectedImages([]);
       setSoulsDataFile(null);
       setYouthsDataFile(null);
+
+      // Refresh reports
+      const { data: refreshedData } = await supabase
+        .from('heart_reports')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (refreshedData) {
+        setReports(refreshedData as HeartReport[]);
+      }
     } catch (error) {
       console.error('Error submitting report:', error);
       toast({
@@ -272,225 +297,278 @@ const HeartInitiative = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Category Selection */}
-                <div className="space-y-2">
-                  <Label>Category *</Label>
-                  <Select value={formData.category} onValueChange={(v) => handleInputChange('category', v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          <div className="flex items-center gap-2">
-                            <cat.icon className="h-4 w-4" />
-                            {cat.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Category Selection */}
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.value} value={cat.value}>
+                                <div className="flex items-center gap-2">
+                                  <cat.icon className="h-4 w-4" />
+                                  {cat.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* Basic Info */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="outreach_name">Outreach Name *</Label>
-                    <Input
-                      id="outreach_name"
-                      placeholder="e.g., Community Food Drive"
-                      value={formData.outreach_name}
-                      onChange={(e) => handleInputChange('outreach_name', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="event_date">Event Date *</Label>
-                    <Input
-                      id="event_date"
-                      type="date"
-                      value={formData.event_date}
-                      onChange={(e) => handleInputChange('event_date', e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    Location Details
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="country">Country *</Label>
-                      <Input
-                        id="country"
-                        placeholder="e.g., Nigeria"
-                        value={formData.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">State/Region</Label>
-                      <Input
-                        id="state"
-                        placeholder="e.g., Lagos"
-                        value={formData.state}
-                        onChange={(e) => handleInputChange('state', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        placeholder="e.g., Ikeja"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location_details">Venue/Address</Label>
-                    <Input
-                      id="location_details"
-                      placeholder="Specific venue or address"
-                      value={formData.location_details}
-                      onChange={(e) => handleInputChange('location_details', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Impact Metrics */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    Impact Metrics
-                  </div>
-                  <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="reach_impact">People Reached *</Label>
-                      <Input
-                        id="reach_impact"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={formData.reach_impact}
-                        onChange={(e) => handleInputChange('reach_impact', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="souls_won">Souls Won</Label>
-                      <Input
-                        id="souls_won"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={formData.souls_won}
-                        onChange={(e) => handleInputChange('souls_won', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="youths_incorporated">Youths Incorporated</Label>
-                      <Input
-                        id="youths_incorporated"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={formData.youths_incorporated}
-                        onChange={(e) => handleInputChange('youths_incorporated', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="magazines_shared">Magazines Shared</Label>
-                      <Input
-                        id="magazines_shared"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={formData.magazines_shared}
-                        onChange={(e) => handleInputChange('magazines_shared', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* File Uploads */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Upload className="h-4 w-4 text-primary" />
-                    Uploads
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="images">Images (max 5)</Label>
-                      <Input
-                        id="images"
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageChange}
-                        className="cursor-pointer"
-                      />
-                      {selectedImages.length > 0 && (
-                        <p className="text-xs text-muted-foreground">{selectedImages.length} file(s) selected</p>
+                  {/* Basic Info */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="outreach_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Outreach Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Community Food Drive" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="souls_data">Souls Data (CSV)</Label>
-                      <Input
-                        id="souls_data"
-                        type="file"
-                        accept=".csv"
-                        onChange={(e) => setSoulsDataFile(e.target.files?.[0] || null)}
-                        className="cursor-pointer"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="youths_data">Youths Data (CSV)</Label>
-                      <Input
-                        id="youths_data"
-                        type="file"
-                        accept=".csv"
-                        onChange={(e) => setYouthsDataFile(e.target.files?.[0] || null)}
-                        className="cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Testimonies & Summary */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="testimonies">Testimonies</Label>
-                    <Textarea
-                      id="testimonies"
-                      placeholder="Share any testimonies or remarkable moments..."
-                      rows={3}
-                      value={formData.testimonies}
-                      onChange={(e) => handleInputChange('testimonies', e.target.value)}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="event_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Date *</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="summary">Summary</Label>
-                    <Textarea
-                      id="summary"
-                      placeholder="Brief summary of the outreach..."
-                      rows={3}
-                      value={formData.summary}
-                      onChange={(e) => handleInputChange('summary', e.target.value)}
+
+                  {/* Location */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      Location Details
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Nigeria" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State/Region</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Lagos" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Ikeja" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="location_details"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Venue/Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Specific venue or address" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                </div>
 
-                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                  {isSubmitting ? 'Submitting...' : 'Submit Report'}
-                </Button>
-              </form>
+                  {/* Impact Metrics */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Impact Metrics
+                    </div>
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+                      <FormField
+                        control={form.control}
+                        name="reach_impact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>People Reached *</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="souls_won"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Souls Won</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="youths_incorporated"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Youths Incorporated</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="magazines_shared"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Magazines Shared</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* File Uploads */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Upload className="h-4 w-4 text-primary" />
+                      Uploads
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="images">Images (max 5)</Label>
+                        <Input
+                          id="images"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageChange}
+                          className="cursor-pointer"
+                        />
+                        {selectedImages.length > 0 && (
+                          <p className="text-xs text-muted-foreground">{selectedImages.length} file(s) selected</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="souls_data">Souls Data (CSV)</Label>
+                        <Input
+                          id="souls_data"
+                          type="file"
+                          accept=".csv"
+                          onChange={(e) => setSoulsDataFile(e.target.files?.[0] || null)}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="youths_data">Youths Data (CSV)</Label>
+                        <Input
+                          id="youths_data"
+                          type="file"
+                          accept=".csv"
+                          onChange={(e) => setYouthsDataFile(e.target.files?.[0] || null)}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Testimonies & Summary */}
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="testimonies"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Testimonies</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Share any testimonies or remarkable moments..."
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="summary"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Summary</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Brief summary of the outreach..."
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                    {isSubmitting ? 'Submitting...' : 'Submit Report'}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </TabsContent>
@@ -531,17 +609,16 @@ const HeartInitiative = () => {
                             <Calendar className="h-3 w-3" />
                             {new Date(report.event_date).toLocaleDateString()}
                             <span>•</span>
-                            <MapPin className="h-3 w-3" />
                             {report.country}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold text-foreground">{report.reach_impact} reached</div>
-                          {report.souls_won > 0 && (
-                            <div className="text-sm text-primary">{report.souls_won} souls won</div>
-                          )}
+                          <div className="flex items-center gap-1 text-sm font-medium text-foreground">
+                            <TrendingUp className="h-3 w-3" />
+                            {report.reach_impact.toLocaleString()} reached
+                          </div>
+                          {getStatusBadge(report.status)}
                         </div>
-                        <div>{getStatusBadge(report.status)}</div>
                       </div>
                     );
                   })}

@@ -1,18 +1,27 @@
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Play,
   Clock,
@@ -24,9 +33,18 @@ import {
   Coins,
   Trophy,
   Star,
-  ChevronRight,
   Lock,
 } from 'lucide-react';
+
+const partnershipSchema = z.object({
+  category: z.string().min(1, 'Please select a partnership category'),
+  amount: z.string()
+    .min(1, 'Amount is required')
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Must be a valid amount greater than 0'),
+  payment_method: z.string().min(1, 'Please select a payment method'),
+});
+
+type PartnershipFormData = z.infer<typeof partnershipSchema>;
 
 interface Course {
   id: string;
@@ -59,10 +77,16 @@ const GYLFAcademy = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [partnershipAmount, setPartnershipAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [partnershipCategory, setPartnershipCategory] = useState('');
   const [isSubmittingPartnership, setIsSubmittingPartnership] = useState(false);
+
+  const partnershipForm = useForm<PartnershipFormData>({
+    resolver: zodResolver(partnershipSchema),
+    defaultValues: {
+      category: '',
+      amount: '',
+      payment_method: '',
+    },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,25 +120,18 @@ const GYLFAcademy = () => {
     fetchData();
   }, [profile?.id]);
 
-  const handlePartnershipSubmit = async () => {
-    if (!profile?.id || !partnershipAmount || !paymentMethod || !partnershipCategory) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please fill in all partnership details.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const onPartnershipSubmit = async (data: PartnershipFormData) => {
+    if (!profile?.id) return;
 
     setIsSubmittingPartnership(true);
 
     try {
       const { error } = await supabase.from('partnerships').insert({
         profile_id: profile.id,
-        amount: parseFloat(partnershipAmount),
+        amount: parseFloat(data.amount),
         currency: 'USD',
-        payment_method: paymentMethod,
-        category: partnershipCategory as 'gylf_academy' | 'gylf_conferences' | 'gylf_missions_trips' | 'gylf_outreaches' | 'hslhs' | 'magazine' | 'offerings' | 'sponsor_gytv',
+        payment_method: data.payment_method,
+        category: data.category as 'gylf_academy' | 'gylf_conferences' | 'gylf_missions_trips' | 'gylf_outreaches' | 'hslhs' | 'magazine' | 'offerings' | 'sponsor_gytv',
       });
 
       if (error) throw error;
@@ -125,19 +142,17 @@ const GYLFAcademy = () => {
       });
 
       // Reset form
-      setPartnershipAmount('');
-      setPaymentMethod('');
-      setPartnershipCategory('');
+      partnershipForm.reset();
 
       // Refresh partnerships
-      const { data } = await supabase
+      const { data: refreshedData } = await supabase
         .from('partnerships')
         .select('*')
         .eq('profile_id', profile.id)
         .order('created_at', { ascending: false });
 
-      if (data) {
-        setPartnerships(data as Partnership[]);
+      if (refreshedData) {
+        setPartnerships(refreshedData as Partnership[]);
       }
     } catch (error) {
       console.error('Error submitting partnership:', error);
@@ -194,6 +209,8 @@ const GYLFAcademy = () => {
   };
 
   const totalPartnership = partnerships.reduce((sum, p) => p.status === 'completed' ? sum + p.amount : sum, 0);
+
+  const selectedPaymentMethod = partnershipForm.watch('payment_method');
 
   return (
     <div className="space-y-6">
@@ -420,71 +437,102 @@ const GYLFAcademy = () => {
                   Support the GYLF mission through your partnership
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Partnership Category</Label>
-                  <Select value={partnershipCategory} onValueChange={setPartnershipCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monthly">Monthly Partnership</SelectItem>
-                      <SelectItem value="project">Project Support</SelectItem>
-                      <SelectItem value="outreach">Outreach Sponsorship</SelectItem>
-                      <SelectItem value="general">General Offering</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <CardContent>
+                <Form {...partnershipForm}>
+                  <form onSubmit={partnershipForm.handleSubmit(onPartnershipSubmit)} className="space-y-4">
+                    <FormField
+                      control={partnershipForm.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Partnership Category</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="hslhs">HSLHS</SelectItem>
+                              <SelectItem value="magazine">Magazine</SelectItem>
+                              <SelectItem value="gylf_missions_trips">GYLF Missions Trips</SelectItem>
+                              <SelectItem value="offerings">Offerings</SelectItem>
+                              <SelectItem value="gylf_conferences">GYLF Conferences</SelectItem>
+                              <SelectItem value="sponsor_gytv">Sponsor a GYTV Program</SelectItem>
+                              <SelectItem value="gylf_outreaches">GYLF Outreaches</SelectItem>
+                              <SelectItem value="gylf_academy">GYLF Academy</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (USD)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    min="1"
-                    placeholder="Enter amount"
-                    value={partnershipAmount}
-                    onChange={(e) => setPartnershipAmount(e.target.value)}
-                  />
-                </div>
+                    <FormField
+                      control={partnershipForm.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Amount (USD)</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="1" placeholder="Enter amount" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <div className="space-y-2">
-                  <Label>Payment Method</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <Button
-                      variant={paymentMethod === 'espees' ? 'default' : 'outline'}
-                      className="h-auto py-3 flex-col gap-1"
-                      onClick={() => setPaymentMethod('espees')}
-                    >
-                      <Coins className="h-5 w-5" />
-                      <span className="text-xs">Espees</span>
-                    </Button>
-                    <Button
-                      variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                      className="h-auto py-3 flex-col gap-1"
-                      onClick={() => setPaymentMethod('card')}
-                    >
-                      <CreditCard className="h-5 w-5" />
-                      <span className="text-xs">Card</span>
-                    </Button>
-                    <Button
-                      variant={paymentMethod === 'bank' ? 'default' : 'outline'}
-                      className="h-auto py-3 flex-col gap-1"
-                      onClick={() => setPaymentMethod('bank')}
-                    >
-                      <Building2 className="h-5 w-5" />
-                      <span className="text-xs">Bank</span>
-                    </Button>
-                  </div>
-                </div>
+                    <FormField
+                      control={partnershipForm.control}
+                      name="payment_method"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Method</FormLabel>
+                          <FormControl>
+                            <div className="grid grid-cols-3 gap-3">
+                              <Button
+                                type="button"
+                                variant={selectedPaymentMethod === 'espees' ? 'default' : 'outline'}
+                                className="h-auto py-3 flex-col gap-1"
+                                onClick={() => field.onChange('espees')}
+                              >
+                                <Coins className="h-5 w-5" />
+                                <span className="text-xs">Espees</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={selectedPaymentMethod === 'card' ? 'default' : 'outline'}
+                                className="h-auto py-3 flex-col gap-1"
+                                onClick={() => field.onChange('card')}
+                              >
+                                <CreditCard className="h-5 w-5" />
+                                <span className="text-xs">Card</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={selectedPaymentMethod === 'bank' ? 'default' : 'outline'}
+                                className="h-auto py-3 flex-col gap-1"
+                                onClick={() => field.onChange('bank')}
+                              >
+                                <Building2 className="h-5 w-5" />
+                                <span className="text-xs">Bank</span>
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <Button
-                  className="w-full"
-                  onClick={handlePartnershipSubmit}
-                  disabled={isSubmittingPartnership}
-                >
-                  {isSubmittingPartnership ? 'Processing...' : 'Submit Partnership'}
-                </Button>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmittingPartnership}
+                    >
+                      {isSubmittingPartnership ? 'Processing...' : 'Submit Partnership'}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
 
@@ -565,7 +613,7 @@ const GYLFAcademy = () => {
                     {partnerships.map((p) => (
                       <TableRow key={p.id}>
                         <TableCell>{new Date(p.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="capitalize">{p.category}</TableCell>
+                        <TableCell className="capitalize">{p.category.replace(/_/g, ' ')}</TableCell>
                         <TableCell className="capitalize">{p.payment_method}</TableCell>
                         <TableCell>${p.amount.toLocaleString()}</TableCell>
                         <TableCell>
