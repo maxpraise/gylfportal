@@ -13,6 +13,12 @@ import {
   ExternalLink,
   ArrowUpRight,
   UserPlus,
+  Heart,
+  Calendar,
+  Cloud,
+  Play,
+  DollarSign,
+  MessageSquare,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +46,21 @@ interface RecentReferral {
   avatar_url: string | null;
 }
 
+interface ActivityStats {
+  heartReports: number;
+  meetings: number;
+  prayerRequests: number;
+  testimonies: number;
+  totalPartnership: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'heart' | 'meeting' | 'prayer' | 'testimony' | 'partnership';
+  title: string;
+  date: string;
+}
+
 const Dashboard = () => {
   const { profile, role } = useAuth();
   const { toast } = useToast();
@@ -50,6 +71,14 @@ const Dashboard = () => {
   const [referralStats, setReferralStats] = useState<ReferralStats>({ total: 0, thisMonth: 0, thisWeek: 0 });
   const [recentReferrals, setRecentReferrals] = useState<RecentReferral[]>([]);
   const [chartData, setChartData] = useState<{ month: string; referrals: number }[]>([]);
+  const [activityStats, setActivityStats] = useState<ActivityStats>({
+    heartReports: 0,
+    meetings: 0,
+    prayerRequests: 0,
+    testimonies: 0,
+    totalPartnership: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -137,6 +166,43 @@ const Dashboard = () => {
         setRecentReferrals(recent);
       }
 
+      // Fetch activity stats
+      const [heartRes, meetingsRes, prayersRes, testimoniesRes, partnershipsRes] = await Promise.all([
+        supabase.from('heart_reports').select('id, outreach_name, created_at').eq('profile_id', profile.id),
+        supabase.from('connect_meetings').select('id, meeting_title, created_at').eq('profile_id', profile.id),
+        supabase.from('prayer_requests').select('id, request, created_at').eq('profile_id', profile.id),
+        supabase.from('testimonies').select('id, title, created_at').eq('profile_id', profile.id),
+        supabase.from('partnerships').select('id, amount, category, created_at').eq('profile_id', profile.id),
+      ]);
+
+      const heartReports = heartRes.data || [];
+      const meetings = meetingsRes.data || [];
+      const prayers = prayersRes.data || [];
+      const testimonies = testimoniesRes.data || [];
+      const partnerships = partnershipsRes.data || [];
+
+      const totalPartnership = partnerships.reduce((sum, p) => sum + Number(p.amount), 0);
+
+      setActivityStats({
+        heartReports: heartReports.length,
+        meetings: meetings.length,
+        prayerRequests: prayers.length,
+        testimonies: testimonies.length,
+        totalPartnership,
+      });
+
+      // Build recent activity feed
+      const allActivities: RecentActivity[] = [
+        ...heartReports.map(h => ({ id: h.id, type: 'heart' as const, title: h.outreach_name, date: h.created_at })),
+        ...meetings.map(m => ({ id: m.id, type: 'meeting' as const, title: m.meeting_title, date: m.created_at })),
+        ...prayers.map(p => ({ id: p.id, type: 'prayer' as const, title: p.request.substring(0, 50) + '...', date: p.created_at })),
+        ...testimonies.map(t => ({ id: t.id, type: 'testimony' as const, title: t.title, date: t.created_at })),
+        ...partnerships.map(p => ({ id: p.id, type: 'partnership' as const, title: `$${p.amount} - ${p.category}`, date: p.created_at })),
+      ];
+
+      allActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setRecentActivity(allActivities.slice(0, 8));
+
       setIsLoading(false);
     };
 
@@ -170,6 +236,26 @@ const Dashboard = () => {
   const referralsToNextLevel = () => {
     if (!nextLevel) return 0;
     return Math.max(0, nextLevel.min_referrals - (profile?.total_referrals || 0));
+  };
+
+  const getActivityIcon = (type: RecentActivity['type']) => {
+    switch (type) {
+      case 'heart': return <Heart className="h-4 w-4 text-destructive" />;
+      case 'meeting': return <Calendar className="h-4 w-4 text-primary" />;
+      case 'prayer': return <Cloud className="h-4 w-4 text-chart-2" />;
+      case 'testimony': return <MessageSquare className="h-4 w-4 text-chart-1" />;
+      case 'partnership': return <DollarSign className="h-4 w-4 text-chart-3" />;
+    }
+  };
+
+  const getActivityLabel = (type: RecentActivity['type']) => {
+    switch (type) {
+      case 'heart': return 'HEART Report';
+      case 'meeting': return 'Meeting';
+      case 'prayer': return 'Prayer Request';
+      case 'testimony': return 'Testimony';
+      case 'partnership': return 'Partnership';
+    }
   };
 
   if (isLoading) {
@@ -233,17 +319,17 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* This Week */}
+        {/* HEART Reports */}
         <Card className="border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              This Week
+              HEART Reports
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-chart-2" />
+            <Heart className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{referralStats.thisWeek}</div>
-            <p className="text-xs text-muted-foreground mt-1">New referrals</p>
+            <div className="text-2xl font-bold text-foreground">{activityStats.heartReports}</div>
+            <p className="text-xs text-muted-foreground mt-1">Outreaches submitted</p>
           </CardContent>
         </Card>
 
@@ -266,6 +352,54 @@ const Dashboard = () => {
               <ExternalLink className="h-3 w-3" />
               Copy referral link
             </button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Stats Row */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-border bg-gradient-to-br from-card to-muted/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{activityStats.meetings}</p>
+              <p className="text-xs text-muted-foreground">Meetings</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border bg-gradient-to-br from-card to-muted/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="p-3 rounded-full bg-chart-2/10">
+              <Cloud className="h-5 w-5 text-chart-2" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{activityStats.prayerRequests}</p>
+              <p className="text-xs text-muted-foreground">Prayers</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border bg-gradient-to-br from-card to-muted/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="p-3 rounded-full bg-chart-1/10">
+              <MessageSquare className="h-5 w-5 text-chart-1" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{activityStats.testimonies}</p>
+              <p className="text-xs text-muted-foreground">Testimonies</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border bg-gradient-to-br from-card to-muted/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="p-3 rounded-full bg-chart-3/10">
+              <DollarSign className="h-5 w-5 text-chart-3" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">${activityStats.totalPartnership.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Partnership</p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -362,7 +496,100 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Recent Activity */}
+      {/* Watch GYTV eCard and Recent Activity */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Watch GYTV eCard */}
+        <Card className="border-border overflow-hidden">
+          <div className="relative bg-gradient-to-br from-primary/20 to-primary/5 p-6">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-4">
+                <Play className="h-6 w-6 text-primary" />
+                <span className="font-bold text-lg">Watch GYTV</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Stay connected with the latest GYLF programs, teachings, and events.
+              </p>
+              <Button 
+                className="w-full"
+                onClick={() => window.open('https://www.youtube.com/@GYLFTV', '_blank')}
+              >
+                <Play className="mr-2 h-4 w-4" />
+                Watch Now
+              </Button>
+            </div>
+          </div>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Latest Programs</span>
+                <Badge variant="secondary">Live</Badge>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                  <Play className="h-4 w-4 text-primary" />
+                  <span className="text-sm truncate">Youth Leadership Masterclass</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                  <Play className="h-4 w-4 text-primary" />
+                  <span className="text-sm truncate">Global Impact Stories</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card className="lg:col-span-2 border-border">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <div className="text-center py-8">
+                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No activity yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start engaging with GYLF programs to see your activity here!
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/heart')}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    HEART
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/prayer')}>
+                    <Cloud className="mr-2 h-4 w-4" />
+                    Prayer
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/testimony')}>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Testimony
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <div className="p-2 rounded-full bg-background">
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">{getActivityLabel(activity.type)}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(activity.date).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Referrals */}
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -388,21 +615,19 @@ const Dashboard = () => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {recentReferrals.map((referral) => (
-                <div key={referral.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {referral.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{referral.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Joined {new Date(referral.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
+                <div key={referral.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-medium text-primary">
+                      {referral.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">{referral.full_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Joined {new Date(referral.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                   <Badge variant="outline">Level 1</Badge>
                 </div>
