@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: {
-          email: "noreply@globalyouthleadersforum.org",
+          email: "noreply@dispatch.globalyouthleadersforum.org",
           name: "GYLF Communications",
         },
         to: [{ email }],
