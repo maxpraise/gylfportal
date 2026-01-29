@@ -94,7 +94,7 @@ const Referrals = () => {
   );
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Joined Date', 'Level', 'Their Referrals'];
+    const headers = ['Name', 'Email', 'Joined Date', 'Level', 'Their Members'];
     const rows = filteredReferrals.map((r) => [
       r.full_name,
       r.email,
@@ -108,14 +108,14 @@ const Referrals = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'my-referrals.csv';
+    a.download = 'my-members.csv';
     a.click();
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-pulse text-muted-foreground">Loading referrals...</div>
+        <div className="animate-pulse text-muted-foreground">Loading members...</div>
       </div>
     );
   }
@@ -125,7 +125,7 @@ const Referrals = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">My Referrals</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">My Members</h1>
           <p className="text-muted-foreground mt-1">
             Manage and track your network of {referrals.length} members
           </p>
@@ -147,7 +147,7 @@ const Referrals = () => {
         <Card className="border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Referrals
+              Total Members
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -189,7 +189,7 @@ const Referrals = () => {
       <Card className="border-border">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>All Referrals</CardTitle>
+            <CardTitle>All Members</CardTitle>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -205,7 +205,7 @@ const Referrals = () => {
           {referrals.length === 0 ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No referrals yet</h3>
+              <h3 className="text-lg font-medium mb-2">No members yet</h3>
               <p className="text-muted-foreground mb-4">
                 Share your referral code to start building your network.
               </p>
@@ -230,7 +230,7 @@ const Referrals = () => {
                     <TableHead>Member</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Level</TableHead>
-                    <TableHead className="text-right">Their Referrals</TableHead>
+                    <TableHead className="text-right">Their Members</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

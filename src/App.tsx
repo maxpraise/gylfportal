@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import Referrals from "./pages/Referrals";
+import Members from "./pages/Members";
 import Invite from "./pages/Invite";
 import GrowthPath from "./pages/GrowthPath";
 import Resources from "./pages/Resources";
@@ -15,13 +15,13 @@ import Settings from "./pages/Settings";
 import ManageUsers from "./pages/admin/ManageUsers";
 import Reports from "./pages/admin/Reports";
 import NotFound from "./pages/NotFound";
-import GYLFConnect from "./pages/GYLFConnect";
 import HeartInitiative from "./pages/HeartInitiative";
 import GYLFAcademy from "./pages/GYLFAcademy";
-import GYLFMeetings from "./pages/GYLFMeetings";
+import ConnectMeetings from "./pages/ConnectMeetings";
 import PrayerCloud from "./pages/PrayerCloud";
 import ShareTestimony from "./pages/ShareTestimony";
 import FAQ from "./pages/FAQ";
+import Partnership from "./pages/Partnership";
 
 const queryClient = new QueryClient();
 
@@ -60,17 +60,17 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
-        <Route path="referrals" element={<Referrals />} />
+        <Route path="members" element={<Members />} />
         <Route path="invite" element={<Invite />} />
         <Route path="growth" element={<GrowthPath />} />
         <Route path="resources" element={<Resources />} />
-        <Route path="connect" element={<GYLFConnect />} />
         <Route path="heart" element={<HeartInitiative />} />
         <Route path="academy" element={<GYLFAcademy />} />
-        <Route path="meetings" element={<GYLFMeetings />} />
+        <Route path="meetings" element={<ConnectMeetings />} />
         <Route path="prayer" element={<PrayerCloud />} />
         <Route path="testimony" element={<ShareTestimony />} />
         <Route path="faq" element={<FAQ />} />
+        <Route path="partnership" element={<Partnership />} />
         <Route path="settings" element={<Settings />} />
         <Route path="admin/users" element={<ManageUsers />} />
         <Route path="admin/reports" element={<Reports />} />

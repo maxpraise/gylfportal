@@ -1,50 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import {
   Play,
   Clock,
   CheckCircle2,
   BookOpen,
   Award,
-  CreditCard,
-  Building2,
-  Coins,
   Trophy,
-  Star,
   Lock,
 } from 'lucide-react';
-
-const partnershipSchema = z.object({
-  category: z.string().min(1, 'Please select a partnership category'),
-  amount: z.string()
-    .min(1, 'Amount is required')
-    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Must be a valid amount greater than 0'),
-  payment_method: z.string().min(1, 'Please select a payment method'),
-});
-
-type PartnershipFormData = z.infer<typeof partnershipSchema>;
 
 interface Course {
   id: string;
@@ -58,39 +29,16 @@ interface Course {
   order_index: number;
 }
 
-interface Partnership {
-  id: string;
-  amount: number;
-  currency: string;
-  payment_method: string;
-  category: string;
-  status: string;
-  created_at: string;
-}
-
 const GYLFAcademy = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [partnerships, setPartnerships] = useState<Partnership[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [isSubmittingPartnership, setIsSubmittingPartnership] = useState(false);
-
-  const partnershipForm = useForm<PartnershipFormData>({
-    resolver: zodResolver(partnershipSchema),
-    defaultValues: {
-      category: '',
-      amount: '',
-      payment_method: '',
-    },
-  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      // Fetch courses
+    const fetchCourses = async () => {
       const { data: coursesData } = await supabase
         .from('academy_courses')
         .select('*')
@@ -101,70 +49,11 @@ const GYLFAcademy = () => {
         setCourses(coursesData);
       }
 
-      // Fetch partnerships
-      if (profile?.id) {
-        const { data: partnershipsData } = await supabase
-          .from('partnerships')
-          .select('*')
-          .eq('profile_id', profile.id)
-          .order('created_at', { ascending: false });
-
-        if (partnershipsData) {
-          setPartnerships(partnershipsData as Partnership[]);
-        }
-      }
-
       setIsLoading(false);
     };
 
-    fetchData();
-  }, [profile?.id]);
-
-  const onPartnershipSubmit = async (data: PartnershipFormData) => {
-    if (!profile?.id) return;
-
-    setIsSubmittingPartnership(true);
-
-    try {
-      const { error } = await supabase.from('partnerships').insert({
-        profile_id: profile.id,
-        amount: parseFloat(data.amount),
-        currency: 'USD',
-        payment_method: data.payment_method,
-        category: data.category as 'gylf_academy' | 'gylf_conferences' | 'gylf_missions_trips' | 'gylf_outreaches' | 'hslhs' | 'magazine' | 'offerings' | 'sponsor_gytv',
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Partnership Recorded!',
-        description: 'Your partnership has been recorded. Thank you for your support!',
-      });
-
-      // Reset form
-      partnershipForm.reset();
-
-      // Refresh partnerships
-      const { data: refreshedData } = await supabase
-        .from('partnerships')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .order('created_at', { ascending: false });
-
-      if (refreshedData) {
-        setPartnerships(refreshedData as Partnership[]);
-      }
-    } catch (error) {
-      console.error('Error submitting partnership:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to record partnership. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmittingPartnership(false);
-    }
-  };
+    fetchCourses();
+  }, []);
 
   const sampleQuizQuestions = [
     {
@@ -208,17 +97,13 @@ const GYLFAcademy = () => {
     setQuizAnswers({});
   };
 
-  const totalPartnership = partnerships.reduce((sum, p) => p.status === 'completed' ? sum + p.amount : sum, 0);
-
-  const selectedPaymentMethod = partnershipForm.watch('payment_method');
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">GYLF Academy</h1>
         <p className="text-muted-foreground mt-1">
-          Learn, grow, and contribute to the mission
+          Learn and grow through training courses and quizzes
         </p>
       </div>
 
@@ -267,11 +152,11 @@ const GYLFAcademy = () => {
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="bg-purple-500/10 p-2 rounded-lg">
-                <Coins className="h-5 w-5 text-purple-600" />
+                <Award className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">${totalPartnership.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Partnership</p>
+                <p className="text-2xl font-bold">0</p>
+                <p className="text-xs text-muted-foreground">Certificates</p>
               </div>
             </div>
           </CardContent>
@@ -279,11 +164,9 @@ const GYLFAcademy = () => {
       </div>
 
       <Tabs defaultValue="courses" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="courses">Training Videos</TabsTrigger>
           <TabsTrigger value="quiz">Quiz</TabsTrigger>
-          <TabsTrigger value="partnership">Partnership</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
 
         {/* Training Videos */}
@@ -419,212 +302,6 @@ const GYLFAcademy = () => {
                     <Button onClick={handleQuizSubmit}>Submit Answers</Button>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Partnership */}
-        <TabsContent value="partnership" className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-primary" />
-                  Give Partnership
-                </CardTitle>
-                <CardDescription>
-                  Support the GYLF mission through your partnership
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...partnershipForm}>
-                  <form onSubmit={partnershipForm.handleSubmit(onPartnershipSubmit)} className="space-y-4">
-                    <FormField
-                      control={partnershipForm.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Partnership Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="hslhs">HSLHS</SelectItem>
-                              <SelectItem value="magazine">Magazine</SelectItem>
-                              <SelectItem value="gylf_missions_trips">GYLF Missions Trips</SelectItem>
-                              <SelectItem value="offerings">Offerings</SelectItem>
-                              <SelectItem value="gylf_conferences">GYLF Conferences</SelectItem>
-                              <SelectItem value="sponsor_gytv">Sponsor a GYTV Program</SelectItem>
-                              <SelectItem value="gylf_outreaches">GYLF Outreaches</SelectItem>
-                              <SelectItem value="gylf_academy">GYLF Academy</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={partnershipForm.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Amount (USD)</FormLabel>
-                          <FormControl>
-                            <Input type="number" min="1" placeholder="Enter amount" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={partnershipForm.control}
-                      name="payment_method"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Payment Method</FormLabel>
-                          <FormControl>
-                            <div className="grid grid-cols-3 gap-3">
-                              <Button
-                                type="button"
-                                variant={selectedPaymentMethod === 'espees' ? 'default' : 'outline'}
-                                className="h-auto py-3 flex-col gap-1"
-                                onClick={() => field.onChange('espees')}
-                              >
-                                <Coins className="h-5 w-5" />
-                                <span className="text-xs">Espees</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant={selectedPaymentMethod === 'card' ? 'default' : 'outline'}
-                                className="h-auto py-3 flex-col gap-1"
-                                onClick={() => field.onChange('card')}
-                              >
-                                <CreditCard className="h-5 w-5" />
-                                <span className="text-xs">Card</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant={selectedPaymentMethod === 'bank' ? 'default' : 'outline'}
-                                className="h-auto py-3 flex-col gap-1"
-                                onClick={() => field.onChange('bank')}
-                              >
-                                <Building2 className="h-5 w-5" />
-                                <span className="text-xs">Bank</span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSubmittingPartnership}
-                    >
-                      {isSubmittingPartnership ? 'Processing...' : 'Submit Partnership'}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-primary" />
-                  Partnership Benefits
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-medium">Support Youth Leadership</p>
-                      <p className="text-sm text-muted-foreground">Your giving helps train young leaders worldwide</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-medium">Fund Outreach Programs</p>
-                      <p className="text-sm text-muted-foreground">Enable HEART initiatives in communities</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-medium">Expand Global Reach</p>
-                      <p className="text-sm text-muted-foreground">Help establish GYLF in new regions</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-medium">Receive Partner Updates</p>
-                      <p className="text-sm text-muted-foreground">Get exclusive reports on your impact</p>
-                    </div>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Performance */}
-        <TabsContent value="performance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Partnership Performance
-              </CardTitle>
-              <CardDescription>
-                Track your giving history and impact
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {partnerships.length === 0 ? (
-                <div className="text-center py-8">
-                  <Coins className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">No Partnerships Yet</h3>
-                  <p className="text-muted-foreground">Start your partnership journey today!</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {partnerships.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>{new Date(p.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="capitalize">{p.category.replace(/_/g, ' ')}</TableCell>
-                        <TableCell className="capitalize">{p.payment_method}</TableCell>
-                        <TableCell>${p.amount.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={p.status === 'completed' ? 'default' : 'secondary'}>
-                            {p.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
               )}
             </CardContent>
           </Card>

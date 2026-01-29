@@ -174,11 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: profileError };
       }
 
-      // Add ambassador role
-      await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: 'ambassador',
-      });
+      // Note: Ambassador role is automatically assigned via database trigger on profile creation
 
       // Update referrer's count and add tracking
       if (referrerProfileId) {
@@ -198,10 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
 
           // Update referrer's total count
-          await supabase
-            .from('profiles')
-            .update({ total_referrals: (profile?.total_referrals || 0) + 1 })
-            .eq('id', referrerProfileId);
+          await supabase.rpc('increment_referral_count', { profile_id: referrerProfileId });
         }
       }
     }
