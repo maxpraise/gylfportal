@@ -33,6 +33,7 @@ import {
   MessageSquare,
   HelpCircle,
   Calendar,
+  Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -58,7 +59,7 @@ const navigation: NavGroup[] = [
   {
     title: 'Membership',
     items: [
-      { icon: Users, label: 'My Referrals', path: '/dashboard/referrals' },
+      { icon: Users, label: 'My Members', path: '/dashboard/members' },
       { icon: UserPlus, label: 'Invite Members', path: '/dashboard/invite' },
       { icon: TrendingUp, label: 'Growth Path', path: '/dashboard/growth' },
     ],
@@ -66,10 +67,11 @@ const navigation: NavGroup[] = [
   {
     title: 'Programs',
     items: [
-      { icon: Globe, label: 'GYLF Connect', path: '/dashboard/connect' },
+      { icon: Globe, label: 'Resource Center', path: '/dashboard/resources' },
       { icon: Heart, label: 'HEART Initiative', path: '/dashboard/heart' },
       { icon: BookOpen, label: 'GYLF Academy', path: '/dashboard/academy' },
-      { icon: Calendar, label: 'Meetings', path: '/dashboard/meetings' },
+      { icon: Calendar, label: 'Connect Meetings', path: '/dashboard/meetings' },
+      { icon: Coins, label: 'Partnership', path: '/dashboard/partnership' },
     ],
   },
   {

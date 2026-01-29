@@ -410,8 +410,8 @@ const Dashboard = () => {
         <Card className="lg:col-span-2 border-border">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Referral Growth</span>
-              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/referrals')}>
+              <span>Member Growth</span>
+              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/members')}>
                 View All
               </Button>
             </CardTitle>
