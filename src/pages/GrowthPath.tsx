@@ -1,22 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import {
-  Award,
-  Star,
-  Trophy,
-  Crown,
-  Target,
-  Zap,
-  CheckCircle2,
-  Lock,
-  ArrowRight,
-} from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Award, Star, Trophy, Crown, Target, Zap, CheckCircle2, Lock, ArrowRight } from "lucide-react";
 
 interface GrowthPath {
   id: string;
@@ -38,14 +28,11 @@ const GrowthPath = () => {
 
   useEffect(() => {
     const fetchLevels = async () => {
-      const { data } = await supabase
-        .from('growth_paths')
-        .select('*')
-        .order('level');
+      const { data } = await supabase.from("growth_paths").select("*").order("level");
 
       if (data) {
         setLevels(data);
-        
+
         // Find current level
         if (profile?.current_level_id) {
           const current = data.find((l) => l.id === profile.current_level_id);
@@ -63,12 +50,12 @@ const GrowthPath = () => {
   const getProgressToLevel = (level: GrowthPath) => {
     const referrals = profile?.total_referrals || 0;
     if (referrals >= level.min_referrals) return 100;
-    
+
     const prevLevel = levels.find((l) => l.level === level.level - 1);
     const prevMin = prevLevel?.min_referrals || 0;
     const range = level.min_referrals - prevMin;
     const progress = referrals - prevMin;
-    
+
     return Math.max(0, Math.min((progress / range) * 100, 100));
   };
 
@@ -102,11 +89,9 @@ const GrowthPath = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Growth Path</h1>
-          <p className="text-muted-foreground mt-1">
-            Track your leadership journey and unlock new levels
-          </p>
+          <p className="text-muted-foreground mt-1">Track your leadership journey and unlock new levels</p>
         </div>
-        <Button onClick={() => navigate('/dashboard/invite')}>
+        <Button onClick={() => navigate("/dashboard/invite")}>
           Level Up
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
@@ -118,15 +103,14 @@ const GrowthPath = () => {
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex items-center gap-4">
               <div className="bg-primary rounded-full p-4">
-                {currentLevel && (() => {
-                  const Icon = levelIcons[currentLevel.level - 1] || Award;
-                  return <Icon className="h-8 w-8 text-primary-foreground" />;
-                })()}
+                {currentLevel &&
+                  (() => {
+                    const Icon = levelIcons[currentLevel.level - 1] || Award;
+                    return <Icon className="h-8 w-8 text-primary-foreground" />;
+                  })()}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-foreground">
-                  {currentLevel?.name || 'New Ambassador'}
-                </h2>
+                <h2 className="text-xl font-bold text-foreground">{currentLevel?.name || "New Ambassador"}</h2>
                 <p className="text-muted-foreground">Level {currentLevel?.level || 1}</p>
               </div>
             </div>
@@ -135,15 +119,22 @@ const GrowthPath = () => {
                 <span className="text-muted-foreground">Your Referrals</span>
                 <span className="font-medium text-foreground">{profile?.total_referrals || 0}</span>
               </div>
-              <Progress 
-                value={currentLevel ? getProgressToLevel(
-                  levels.find(l => l.level === currentLevel.level + 1) || currentLevel
-                ) : 0} 
+              <Progress
+                value={
+                  currentLevel
+                    ? getProgressToLevel(levels.find((l) => l.level === currentLevel.level + 1) || currentLevel)
+                    : 0
+                }
                 className="h-3"
               />
-              {currentLevel && levels.find(l => l.level === currentLevel.level + 1) && (
+              {currentLevel && levels.find((l) => l.level === currentLevel.level + 1) && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {Math.max(0, (levels.find(l => l.level === currentLevel.level + 1)?.min_referrals || 0) - (profile?.total_referrals || 0))} more referrals to reach {levels.find(l => l.level === currentLevel.level + 1)?.name}
+                  {Math.max(
+                    0,
+                    (levels.find((l) => l.level === currentLevel.level + 1)?.min_referrals || 0) -
+                      (profile?.total_referrals || 0),
+                  )}{" "}
+                  more referrals to reach {levels.find((l) => l.level === currentLevel.level + 1)?.name}
                 </p>
               )}
             </div>
@@ -163,18 +154,20 @@ const GrowthPath = () => {
             <Card
               key={level.id}
               className={`border-border transition-all ${
-                current ? 'ring-2 ring-primary shadow-lg' : ''
-              } ${locked ? 'opacity-60' : ''}`}
+                current ? "ring-2 ring-primary shadow-lg" : ""
+              } ${locked ? "opacity-60" : ""}`}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <div className={`p-3 rounded-full ${
-                    completed 
-                      ? 'bg-chart-1/20 text-chart-1' 
-                      : current 
-                        ? 'bg-primary/20 text-primary' 
-                        : 'bg-muted text-muted-foreground'
-                  }`}>
+                  <div
+                    className={`p-3 rounded-full ${
+                      completed
+                        ? "bg-chart-1/20 text-chart-1"
+                        : current
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
                     {locked ? (
                       <Lock className="h-6 w-6" />
                     ) : completed ? (
@@ -183,9 +176,7 @@ const GrowthPath = () => {
                       <Icon className="h-6 w-6" />
                     )}
                   </div>
-                  <Badge variant={completed ? 'default' : current ? 'secondary' : 'outline'}>
-                    Level {level.level}
-                  </Badge>
+                  <Badge variant={completed ? "default" : current ? "secondary" : "outline"}>Level {level.level}</Badge>
                 </div>
                 <CardTitle className="text-lg mt-3">{level.name}</CardTitle>
                 <CardDescription>{level.description}</CardDescription>
@@ -193,10 +184,10 @@ const GrowthPath = () => {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Required Referrals</span>
+                    <span className="text-muted-foreground">Required Membership</span>
                     <span className="font-medium text-foreground">{level.min_referrals}</span>
                   </div>
-                  
+
                   {!locked && (
                     <>
                       <Progress value={getProgressToLevel(level)} className="h-2" />
@@ -210,13 +201,11 @@ const GrowthPath = () => {
                             Completed
                           </span>
                         )}
-                        {current && !completed && (
-                          <span className="text-primary font-medium">Current Level</span>
-                        )}
+                        {current && !completed && <span className="text-primary font-medium">Current Level</span>}
                       </div>
                     </>
                   )}
-                  
+
                   {locked && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Lock className="h-3 w-3" />
@@ -240,7 +229,7 @@ const GrowthPath = () => {
                 Invite more members to grow your network and unlock new achievements.
               </p>
             </div>
-            <Button onClick={() => navigate('/dashboard/invite')}>
+            <Button onClick={() => navigate("/dashboard/invite")}>
               Start Inviting
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
