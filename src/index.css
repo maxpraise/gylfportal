@@ -1,151 +1,192 @@
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Material Design 3 Design System
+   All colors use HSL for proper theming.
+   Based on Material You dynamic color principles.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    /* Material 3 Primary Tones - Purple */
+    --primary: 262 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-container: 262 100% 92%;
+    --primary-container-foreground: 262 80% 20%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    /* Material 3 Secondary Tones */
+    --secondary: 262 30% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-container: 262 30% 90%;
+    --secondary-container-foreground: 262 30% 20%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    /* Material 3 Tertiary Tones */
+    --tertiary: 330 60% 50%;
+    --tertiary-foreground: 0 0% 100%;
 
-    --primary: 243 75% 58%;
-    --primary-foreground: 225 100% 96%;
+    /* Material 3 Surface Colors */
+    --background: 262 20% 98%;
+    --foreground: 262 10% 10%;
+    --surface: 262 20% 98%;
+    --surface-dim: 262 15% 92%;
+    --surface-bright: 262 20% 100%;
+    --surface-container-lowest: 0 0% 100%;
+    --surface-container-low: 262 20% 96%;
+    --surface-container: 262 20% 94%;
+    --surface-container-high: 262 20% 92%;
+    --surface-container-highest: 262 15% 90%;
 
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    /* Material 3 Surface Variants */
+    --surface-variant: 262 15% 88%;
+    --on-surface-variant: 262 10% 30%;
 
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    /* Card & Popover use surface-container */
+    --card: 0 0% 100%;
+    --card-foreground: 262 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 262 10% 10%;
 
-    --accent: 250 100% 97%;
-    --accent-foreground: 258 89% 66%;
+    /* Material 3 Muted */
+    --muted: 262 15% 90%;
+    --muted-foreground: 262 10% 40%;
 
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    /* Material 3 Accent uses Secondary Container */
+    --accent: 262 30% 90%;
+    --accent-foreground: 262 80% 50%;
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 243 75% 58%;
+    /* Material 3 Error */
+    --destructive: 0 75% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --error-container: 0 100% 92%;
 
-    --radius: 1.25rem;
+    /* Material 3 Outline */
+    --border: 262 10% 78%;
+    --input: 262 10% 78%;
+    --ring: 262 80% 50%;
+    --outline: 262 10% 50%;
+    --outline-variant: 262 10% 80%;
 
-    --sidebar-background: 0 0% 98%;
+    /* Material 3 Radius - Rounded corners */
+    --radius: 1rem;
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-full: 9999px;
 
-    --sidebar-foreground: 0 0% 9%;
+    /* Sidebar - Material 3 Navigation Rail/Drawer */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 262 10% 10%;
+    --sidebar-primary: 262 80% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 262 30% 90%;
+    --sidebar-accent-foreground: 262 80% 50%;
+    --sidebar-border: 262 10% 90%;
+    --sidebar-ring: 262 80% 50%;
+    --sidebar: 0 0% 100%;
 
-    --sidebar-primary: 243 75% 58%;
+    /* Material 3 Charts */
+    --chart-1: 262 80% 50%;
+    --chart-2: 330 60% 50%;
+    --chart-3: 180 60% 45%;
+    --chart-4: 45 90% 50%;
+    --chart-5: 262 30% 45%;
 
-    --sidebar-primary-foreground: 225 100% 96%;
+    /* Material 3 Elevation (shadows) */
+    --elevation-1: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --elevation-2: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --elevation-3: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --elevation-4: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --elevation-5: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
 
-    --sidebar-accent: 0 0% 32%;
+    /* Legacy shadow mappings */
+    --shadow-2xs: var(--elevation-1);
+    --shadow-xs: var(--elevation-1);
+    --shadow-sm: var(--elevation-2);
+    --shadow: var(--elevation-2);
+    --shadow-md: var(--elevation-3);
+    --shadow-lg: var(--elevation-4);
+    --shadow-xl: var(--elevation-5);
+    --shadow-2xl: var(--elevation-5);
 
-    --sidebar-accent-foreground: 0 0% 98%;
-
-    --sidebar-border: 0 0% 83%;
-
-    --sidebar-ring: 243 75% 58%;
-
-    --chart-1: 234 89% 73%;
-
-    --chart-2: 255 91% 76%;
-
-    --chart-3: 270 95% 75%;
-
-    --chart-4: 238 83% 66%;
-
-    --chart-5: 0 0% 45%;
-
-    --sidebar: 0 0% 98%;
-
-    --font-sans: 'Lato', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-
-    --font-serif: 'EB Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-
-    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    /* Typography */
+    --font-sans: 'Roboto', 'Roboto Flex', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Roboto Serif', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
     --tracking-normal: 0em;
-
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
+    /* Material 3 Dark Theme */
+    --primary: 262 100% 80%;
+    --primary-foreground: 262 80% 20%;
+    --primary-container: 262 80% 30%;
+    --primary-container-foreground: 262 100% 92%;
 
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
+    --secondary: 262 30% 80%;
+    --secondary-foreground: 262 30% 20%;
+    --secondary-container: 262 30% 30%;
+    --secondary-container-foreground: 262 30% 90%;
 
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
+    --tertiary: 330 60% 80%;
+    --tertiary-foreground: 330 60% 20%;
 
-    --primary: 234 89% 73%;
-    --primary-foreground: 243 47% 20%;
+    --background: 262 15% 8%;
+    --foreground: 262 10% 95%;
+    --surface: 262 15% 8%;
+    --surface-dim: 262 15% 6%;
+    --surface-bright: 262 15% 18%;
+    --surface-container-lowest: 262 15% 4%;
+    --surface-container-low: 262 15% 10%;
+    --surface-container: 262 15% 12%;
+    --surface-container-high: 262 15% 15%;
+    --surface-container-highest: 262 15% 18%;
 
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
+    --surface-variant: 262 10% 25%;
+    --on-surface-variant: 262 10% 75%;
 
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
+    --card: 262 15% 12%;
+    --card-foreground: 262 10% 95%;
+    --popover: 262 15% 15%;
+    --popover-foreground: 262 10% 95%;
 
-    --accent: 261 72% 22%;
-    --accent-foreground: 255 91% 76%;
+    --muted: 262 10% 25%;
+    --muted-foreground: 262 10% 65%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
+    --accent: 262 30% 25%;
+    --accent-foreground: 262 100% 80%;
 
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 234 89% 73%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 234 89% 73%;
-    --sidebar-primary-foreground: 243 47% 20%;
-    --sidebar-accent: 255 91% 76%;
-    --sidebar-accent-foreground: 261 72% 22%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 234 89% 73%;
-    --chart-1: 229 93% 81%;
-    --chart-2: 252 94% 85%;
-    --chart-3: 269 97% 85%;
-    --chart-4: 234 89% 73%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --destructive: 0 90% 70%;
+    --destructive-foreground: 0 80% 15%;
+    --error-container: 0 80% 20%;
+
+    --border: 262 10% 25%;
+    --input: 262 10% 25%;
+    --ring: 262 100% 80%;
+    --outline: 262 10% 60%;
+    --outline-variant: 262 10% 30%;
+
+    --sidebar-background: 262 15% 10%;
+    --sidebar-foreground: 262 10% 95%;
+    --sidebar-primary: 262 100% 80%;
+    --sidebar-primary-foreground: 262 80% 20%;
+    --sidebar-accent: 262 30% 25%;
+    --sidebar-accent-foreground: 262 100% 80%;
+    --sidebar-border: 262 10% 25%;
+    --sidebar-ring: 262 100% 80%;
+    --sidebar: 262 15% 12%;
+
+    --chart-1: 262 100% 80%;
+    --chart-2: 330 60% 70%;
+    --chart-3: 180 50% 60%;
+    --chart-4: 45 80% 60%;
+    --chart-5: 262 30% 70%;
   }
 }
 
@@ -155,6 +196,244 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Mobile optimizations */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Material 3 Typography Scale */
+  h1 {
+    @apply text-2xl font-medium tracking-tight;
+  }
+
+  h2 {
+    @apply text-xl font-medium;
+  }
+
+  h3 {
+    @apply text-lg font-medium;
+  }
+}
+
+@layer components {
+  /* Material 3 State Layer */
+  .state-layer {
+    @apply relative overflow-hidden;
+  }
+
+  .state-layer::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none transition-opacity duration-200;
+    background: currentColor;
+    opacity: 0;
+  }
+
+  .state-layer:hover::after {
+    opacity: 0.08;
+  }
+
+  .state-layer:focus-visible::after {
+    opacity: 0.12;
+  }
+
+  .state-layer:active::after {
+    opacity: 0.12;
+  }
+
+  /* Material 3 Ripple Effect */
+  .ripple {
+    @apply relative overflow-hidden;
+  }
+
+  /* Material 3 FAB styles */
+  .fab {
+    @apply fixed bottom-20 right-4 z-50;
+    @apply flex items-center justify-center;
+    @apply w-14 h-14 rounded-2xl;
+    @apply bg-primary text-primary-foreground;
+    @apply shadow-lg hover:shadow-xl;
+    @apply transition-all duration-200;
+    @apply active:scale-95;
+  }
+
+  .fab-extended {
+    @apply w-auto px-4 gap-2;
+  }
+
+  /* Material 3 Bottom Navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    @apply bg-surface-container-low border-t border-outline-variant;
+    @apply flex items-center justify-around;
+    @apply h-20 px-2;
+    @apply safe-area-bottom;
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center;
+    @apply min-w-[64px] h-full py-2;
+    @apply text-on-surface-variant;
+    @apply transition-colors duration-200;
+  }
+
+  .bottom-nav-item.active {
+    @apply text-primary;
+  }
+
+  .bottom-nav-item .indicator {
+    @apply flex items-center justify-center;
+    @apply w-16 h-8 rounded-full mb-1;
+    @apply transition-all duration-200;
+  }
+
+  .bottom-nav-item.active .indicator {
+    @apply bg-secondary-container;
+  }
+
+  /* Safe area for bottom navigation */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .pb-safe-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Material 3 Top App Bar */
+  .top-app-bar {
+    @apply sticky top-0 z-40;
+    @apply bg-surface;
+    @apply flex items-center gap-2;
+    @apply h-16 px-4;
+    @apply border-b border-outline-variant;
+  }
+
+  /* Pull to refresh indicator */
+  .pull-indicator {
+    @apply flex items-center justify-center;
+    @apply w-10 h-10 rounded-full;
+    @apply bg-surface-container-high;
+    @apply shadow-md;
+    @apply transition-transform duration-200;
+  }
+
+  /* Material 3 List Item */
+  .list-item {
+    @apply flex items-center gap-4 px-4 py-3;
+    @apply min-h-[56px];
+    @apply transition-colors duration-150;
+    @apply active:bg-surface-variant/50;
+  }
+
+  /* Swipe action background */
+  .swipe-action-bg {
+    @apply absolute inset-y-0 flex items-center px-4;
+    @apply text-destructive-foreground;
+    @apply transition-opacity duration-150;
+  }
+
+  .swipe-action-bg.delete {
+    @apply bg-destructive right-0;
+  }
+
+  .swipe-action-bg.archive {
+    @apply bg-primary left-0;
+  }
+}
+
+@layer utilities {
+  /* Material 3 Surface Tints */
+  .surface-tint-1 {
+    @apply bg-surface;
+    background-image: linear-gradient(hsl(var(--primary) / 0.05), hsl(var(--primary) / 0.05));
+  }
+
+  .surface-tint-2 {
+    @apply bg-surface;
+    background-image: linear-gradient(hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08));
+  }
+
+  .surface-tint-3 {
+    @apply bg-surface;
+    background-image: linear-gradient(hsl(var(--primary) / 0.11), hsl(var(--primary) / 0.11));
+  }
+
+  .surface-tint-4 {
+    @apply bg-surface;
+    background-image: linear-gradient(hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.12));
+  }
+
+  .surface-tint-5 {
+    @apply bg-surface;
+    background-image: linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14));
+  }
+
+  /* Touch-friendly sizing */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Mobile-optimized text */
+  .text-label-small {
+    @apply text-[11px] font-medium tracking-wide;
+  }
+
+  .text-label-medium {
+    @apply text-xs font-medium tracking-wide;
+  }
+
+  .text-label-large {
+    @apply text-sm font-medium tracking-wide;
+  }
+
+  .text-body-small {
+    @apply text-xs;
+  }
+
+  .text-body-medium {
+    @apply text-sm;
+  }
+
+  .text-body-large {
+    @apply text-base;
+  }
+
+  .text-title-small {
+    @apply text-sm font-medium;
+  }
+
+  .text-title-medium {
+    @apply text-base font-medium;
+  }
+
+  .text-title-large {
+    @apply text-[22px] font-medium;
+  }
+
+  .text-headline-small {
+    @apply text-2xl font-normal;
+  }
+
+  .text-headline-medium {
+    @apply text-[28px] font-normal;
+  }
+
+  .text-headline-large {
+    @apply text-[32px] font-normal;
+  }
+
+  .text-display-small {
+    @apply text-4xl font-normal;
+  }
+
+  .text-display-medium {
+    @apply text-[45px] font-normal;
+  }
+
+  .text-display-large {
+    @apply text-[57px] font-normal;
   }
 }
