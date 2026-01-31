@@ -5,18 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-interface KingschatTokenResponse {
-  accessToken: string;
-  expiresInMillis: number;
-  refreshToken: string;
-}
-
 interface KingschatUserInfo {
   id: string;
-  username: string;
-  name: string;
+  username?: string;
+  name?: string;
   email?: string;
   avatar?: string;
+  phone_number?: string;
 }
 
 Deno.serve(async (req) => {
@@ -29,22 +24,27 @@ Deno.serve(async (req) => {
     const { accessToken, refreshToken, expiresInMillis, userInfo } = await req.json();
 
     if (!accessToken || !userInfo) {
+      console.log('Missing required fields');
       return new Response(
         JSON.stringify({ error: 'Missing required fields: accessToken and userInfo' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Kingschat auth request received for user:', userInfo.username || userInfo.id);
+    console.log('Kingschat auth request received');
+    console.log('User info:', JSON.stringify(userInfo));
 
     // Create Supabase admin client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Construct a unique email for Kingschat users if they don't have one
-    const email = userInfo.email || `${userInfo.id}@kingschat.local`;
+    // Construct email - use Kingschat email if available, otherwise create one from username/id
+    const email = userInfo.email || 
+                  (userInfo.username ? `${userInfo.username}@kingschat.user` : `kc_${userInfo.id}@kingschat.user`);
     const fullName = userInfo.name || userInfo.username || 'Kingschat User';
+
+    console.log('Looking up user with email:', email);
 
     // Check if user already exists by email
     const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
@@ -55,6 +55,13 @@ Deno.serve(async (req) => {
     }
 
     let user = existingUsers?.users?.find(u => u.email === email);
+    
+    if (!user) {
+      // Also check if user exists by kingschat_id in metadata
+      user = existingUsers?.users?.find(u => 
+        u.user_metadata?.kingschat_id === userInfo.id
+      );
+    }
     
     if (!user) {
       // Create new user
@@ -100,11 +107,14 @@ Deno.serve(async (req) => {
         referral_code: newCode || `GYLF${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         current_level_id: levelData?.id,
         avatar_url: userInfo.avatar,
+        phone: userInfo.phone_number,
       });
 
       if (profileError) {
         console.error('Error creating profile:', profileError);
         // Don't throw, profile might already exist from trigger
+      } else {
+        console.log('Profile created successfully');
       }
     } else {
       console.log('Existing user found:', user.id);
@@ -116,15 +126,35 @@ Deno.serve(async (req) => {
           kingschat_id: userInfo.id,
           kingschat_username: userInfo.username,
           avatar_url: userInfo.avatar,
+          full_name: fullName,
         },
       });
+
+      // Also update the profile with latest info
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingProfile) {
+        await supabase
+          .from('profiles')
+          .update({
+            full_name: fullName,
+            avatar_url: userInfo.avatar,
+            phone: userInfo.phone_number,
+          })
+          .eq('id', existingProfile.id);
+      }
     }
 
-    // Generate a session for the user
-    // We'll use a magic link approach - generate a token
+    // Generate a session for the user using magic link
+    console.log('Generating magic link for user:', user.id);
+    
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: email,
+      email: user.email!,
     });
 
     if (sessionError) {
@@ -135,22 +165,25 @@ Deno.serve(async (req) => {
     // Extract the token from the action link
     const actionLink = sessionData?.properties?.action_link;
     if (!actionLink) {
+      console.error('No action link in response');
       throw new Error('Failed to generate authentication link');
     }
+
+    console.log('Action link generated');
 
     // Parse the token from the link
     const url = new URL(actionLink);
     const token = url.searchParams.get('token');
     const tokenType = url.searchParams.get('type');
 
-    console.log('Authentication link generated successfully');
+    console.log('Token extracted, type:', tokenType);
 
     return new Response(
       JSON.stringify({ 
         success: true,
         token,
         tokenType,
-        email,
+        email: user.email,
         userId: user.id,
       }),
       { 
