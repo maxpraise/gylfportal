@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import gylfLogo from '@/assets/gylf-logo.png';
 import { loginWithKingschat } from '@/lib/kingschatAuth';
-import { KingschatIcon } from '@/components/icons/KingschatIcon';
+import kingschatIcon from '@/assets/kingschat-icon.png';
 
 // Import custom fonts
 import '@fontsource/outfit/900.css';
@@ -502,7 +502,7 @@ const Auth = () => {
                 {isKingschatLoading ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <KingschatIcon size={24} />
+                  <img src={kingschatIcon} alt="Kingschat" className="h-6 w-6 object-contain" />
                 )}
                 {isKingschatLoading ? 'Connecting...' : 'Login with Kingschat'}
               </Button>
@@ -772,7 +772,7 @@ const Auth = () => {
                 {isKingschatLoading ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <KingschatIcon size={24} />
+                  <img src={kingschatIcon} alt="Kingschat" className="h-6 w-6 object-contain" />
                 )}
                 {isKingschatLoading ? 'Connecting...' : 'Sign up with Kingschat'}
               </Button>
