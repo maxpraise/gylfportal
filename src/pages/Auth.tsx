@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus } from 'lucide-react';
+import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import gylfLogo from '@/assets/gylf-logo.png';
@@ -25,7 +25,15 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
-type AuthMode = 'signin' | 'signup';
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset';
 type SignupStep = 'form' | 'otp' | 'creating';
 
 const Auth = () => {
@@ -34,7 +42,14 @@ const Auth = () => {
   const { user, signIn, signUp, isLoading } = useAuth();
   const { toast } = useToast();
   
-  const [authMode, setAuthMode] = useState<AuthMode>('signin');
+  // Check for reset token in URL
+  const resetToken = searchParams.get('token');
+  const modeParam = searchParams.get('mode');
+  
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    if (modeParam === 'reset' && resetToken) return 'reset';
+    return 'signin';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -50,6 +65,10 @@ const Auth = () => {
   const [otpValue, setOtpValue] = useState('');
   const [otpError, setOtpError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  
+  // Password reset state
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -203,6 +222,84 @@ const Auth = () => {
     setOtpError('');
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    
+    const emailValidation = z.string().email('Please enter a valid email address').safeParse(email);
+    if (!emailValidation.success) {
+      setErrors({ email: 'Please enter a valid email address' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email },
+      });
+
+      if (error) throw error;
+
+      setResetEmailSent(true);
+      toast({
+        title: 'Reset Link Sent',
+        description: 'If an account exists with this email, you will receive a password reset link.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to Send Reset Link',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+
+    const validation = resetPasswordSchema.safeParse({ password, confirmPassword });
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: { token: resetToken, newPassword: password },
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setPasswordResetSuccess(true);
+        toast({
+          title: 'Password Updated',
+          description: 'Your password has been reset successfully. You can now sign in.',
+        });
+      } else {
+        throw new Error(data.error || 'Failed to reset password');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Reset Failed',
+        description: error.message || 'Please try again or request a new reset link.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const switchMode = (mode: AuthMode) => {
     setAuthMode(mode);
     setErrors({});
@@ -210,6 +307,8 @@ const Auth = () => {
     setPassword('');
     setConfirmPassword('');
     setFullName('');
+    setResetEmailSent(false);
+    setPasswordResetSuccess(false);
   };
 
   if (isLoading) {
@@ -388,10 +487,21 @@ const Auth = () => {
                 )}
               </div>
 
+              {/* Forgot Password Link */}
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => switchMode('forgot')}
+                  className="text-body-small text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
               {/* Sign In Button */}
               <Button 
                 type="submit" 
-                className="w-full h-14 mt-6" 
+                className="w-full h-14 mt-4" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Signing in...' : 'Sign In'}
@@ -411,6 +521,179 @@ const Auth = () => {
                 </p>
               </div>
             </form>
+          ) : authMode === 'forgot' ? (
+            /* Forgot Password Form */
+            resetEmailSent ? (
+              <div className="space-y-6 text-center">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+                    <Mail className="h-10 w-10 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-headline-small text-foreground">Check your email</h2>
+                    <p className="text-body-medium text-muted-foreground">
+                      We've sent a password reset link to
+                    </p>
+                    <p className="text-body-large font-medium text-foreground">{email}</p>
+                  </div>
+                </div>
+                
+                <p className="text-body-small text-muted-foreground">
+                  Didn't receive the email? Check your spam folder or try again.
+                </p>
+
+                <Button 
+                  variant="outline"
+                  className="w-full h-14"
+                  onClick={() => switchMode('signin')}
+                >
+                  Back to Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-5">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
+                    <KeyRound className="h-8 w-8 text-primary" />
+                  </div>
+                  <h2 className="text-title-large text-foreground">Forgot Password?</h2>
+                  <p className="text-body-medium text-muted-foreground mt-2">
+                    Enter your email and we'll send you a reset link
+                  </p>
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label className="text-label-large text-foreground">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`pl-12 ${errors.email ? 'border-destructive' : ''}`}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-body-small text-destructive">{errors.email}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-14" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+
+                <div className="text-center pt-4">
+                  <button
+                    type="button"
+                    onClick={() => switchMode('signin')}
+                    className="text-body-medium text-primary font-medium hover:underline inline-flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            )
+          ) : authMode === 'reset' ? (
+            /* Reset Password Form */
+            passwordResetSuccess ? (
+              <div className="space-y-6 text-center">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+                    <CheckCircle className="h-10 w-10 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-headline-small text-foreground">Password Reset!</h2>
+                    <p className="text-body-medium text-muted-foreground">
+                      Your password has been updated successfully.
+                    </p>
+                  </div>
+                </div>
+
+                <Button 
+                  className="w-full h-14"
+                  onClick={() => switchMode('signin')}
+                >
+                  Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-5">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
+                    <Lock className="h-8 w-8 text-primary" />
+                  </div>
+                  <h2 className="text-title-large text-foreground">Create New Password</h2>
+                  <p className="text-body-medium text-muted-foreground mt-2">
+                    Enter your new password below
+                  </p>
+                </div>
+
+                {/* New Password Field */}
+                <div className="space-y-2">
+                  <label className="text-label-large text-foreground">New Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`pl-12 pr-12 ${errors.password ? 'border-destructive' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-body-small text-destructive">{errors.password}</p>
+                  )}
+                </div>
+
+                {/* Confirm Password Field */}
+                <div className="space-y-2">
+                  <label className="text-label-large text-foreground">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`pl-12 pr-12 ${errors.confirmPassword ? 'border-destructive' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-body-small text-destructive">{errors.confirmPassword}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-14" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Updating...' : 'Update Password'}
+                </Button>
+              </form>
+            )
           ) : (
             /* Sign Up Form */
             <form onSubmit={handleSignUpInitiate} className="space-y-4">
