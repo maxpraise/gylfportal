@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AdminRoute from "@/components/auth/AdminRoute";
+import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
@@ -23,6 +24,7 @@ import PrayerCloud from "./pages/PrayerCloud";
 import ShareTestimony from "./pages/ShareTestimony";
 import FAQ from "./pages/FAQ";
 import Partnership from "./pages/Partnership";
+import NewsDetail from "./pages/NewsDetail";
 
 const queryClient = new QueryClient();
 
@@ -45,20 +47,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-foreground">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/auth" replace />} />
+      {/* Public Home Page */}
+      <Route path="/" element={<Home />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/news/:id" element={<NewsDetail />} />
+      
+      {/* Protected Dashboard Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="members" element={<Members />} />

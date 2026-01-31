@@ -286,6 +286,100 @@ export type Database = {
           },
         ]
       }
+      live_stream_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_live: boolean
+          stream_url: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_live?: boolean
+          stream_url: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_live?: boolean
+          stream_url?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          news_id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          news_id: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          news_id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_interactions: {
+        Row: {
+          created_at: string
+          id: string
+          interaction_type: string
+          news_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interaction_type: string
+          news_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          news_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_interactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       otp_verifications: {
         Row: {
           attempts: number
@@ -479,6 +573,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promo_banners: {
+        Row: {
+          created_at: string
+          external_link: string
+          id: string
+          image_url: string
+          is_active: boolean
+          order_index: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_link: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          order_index?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_link?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          order_index?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       quiz_attempts: {
         Row: {
