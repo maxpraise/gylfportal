@@ -9,6 +9,7 @@ import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCirc
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import gylfLogo from '@/assets/gylf-logo.png';
+import { loginWithKingschat } from '@/lib/kingschatAuth';
 
 // Import custom fonts
 import '@fontsource/outfit/900.css';
@@ -95,12 +96,35 @@ const Auth = () => {
     }
   }, [resendCooldown]);
 
-  const handleKingschatLogin = () => {
-    // TODO: Implement Kingschat OAuth when available
-    toast({
-      title: 'Coming Soon',
-      description: 'Kingschat login will be available soon.',
-    });
+  const [isKingschatLoading, setIsKingschatLoading] = useState(false);
+
+  const handleKingschatLogin = async () => {
+    setIsKingschatLoading(true);
+    try {
+      const result = await loginWithKingschat();
+      
+      if (result.success) {
+        toast({
+          title: 'Welcome!',
+          description: 'Successfully signed in with Kingschat.',
+        });
+        // Navigation will happen automatically via auth state change
+      } else {
+        toast({
+          title: 'Kingschat Login Failed',
+          description: result.error || 'Please try again.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Kingschat Login Failed',
+        description: error.message || 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsKingschatLoading(false);
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -471,10 +495,15 @@ const Auth = () => {
               <Button
                 type="button"
                 onClick={handleKingschatLogin}
-                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3"
+                disabled={isKingschatLoading}
+                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3 disabled:opacity-70"
               >
-                <MessageCircle className="h-6 w-6" />
-                Login with Kingschat
+                {isKingschatLoading ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <MessageCircle className="h-6 w-6" />
+                )}
+                {isKingschatLoading ? 'Connecting...' : 'Login with Kingschat'}
               </Button>
 
               {/* Divider */}
@@ -736,10 +765,15 @@ const Auth = () => {
               <Button
                 type="button"
                 onClick={handleKingschatLogin}
-                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3"
+                disabled={isKingschatLoading}
+                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3 disabled:opacity-70"
               >
-                <MessageCircle className="h-6 w-6" />
-                Sign up with Kingschat
+                {isKingschatLoading ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <MessageCircle className="h-6 w-6" />
+                )}
+                {isKingschatLoading ? 'Connecting...' : 'Sign up with Kingschat'}
               </Button>
 
               {/* Divider */}
