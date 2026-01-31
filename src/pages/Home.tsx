@@ -6,7 +6,7 @@ import PromoBannersCarousel from '@/components/home/PromoBannersCarousel';
 import AcademyCoursesCarousel from '@/components/home/AcademyCoursesCarousel';
 import ImpactReportsList from '@/components/home/ImpactReportsList';
 import gylfLogo from '@/assets/gylf-logo.png';
-import { LayoutDashboard, LogIn } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -25,20 +25,11 @@ const Home = () => {
           <Button
             variant="default"
             size="sm"
-            onClick={() => navigate(user ? '/dashboard' : '/auth')}
+            onClick={() => navigate('/dashboard')}
             disabled={isLoading}
           >
-            {user ? (
-              <>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                Portal
-              </>
-            ) : (
-              <>
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
-              </>
-            )}
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Portal
           </Button>
         </div>
       </header>
@@ -77,19 +68,10 @@ const Home = () => {
             </p>
             <Button
               size="lg"
-              onClick={() => navigate(user ? '/dashboard' : '/auth')}
+              onClick={() => navigate('/dashboard')}
             >
-              {user ? (
-                <>
-                  <LayoutDashboard className="mr-2 h-5 w-5" />
-                  Go to Portal
-                </>
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-5 w-5" />
-                  Get Started
-                </>
-              )}
+              <LayoutDashboard className="mr-2 h-5 w-5" />
+              Go to Portal
             </Button>
           </div>
         </section>

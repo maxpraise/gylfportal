@@ -50,10 +50,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Home Page */}
-      <Route path="/" element={<Home />} />
+      {/* Auth is the landing page */}
+      <Route path="/" element={<Auth />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/news/:id" element={<NewsDetail />} />
+      
+      {/* Protected Routes - Home is now the first thing after login */}
+      <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       
       {/* Protected Dashboard Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

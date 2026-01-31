@@ -5,10 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCircle, MessageCircle } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import gylfLogo from '@/assets/gylf-logo.png';
+
+// Import custom fonts
+import '@fontsource/outfit/900.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/700.css';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -35,6 +40,12 @@ const resetPasswordSchema = z.object({
 
 type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset';
 type SignupStep = 'form' | 'otp' | 'creating';
+
+// Glassmorphism card class
+const glassCard = "bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 rounded-[1.5rem]";
+
+// Input styling for glassmorphism
+const glassInput = "bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 rounded-[1rem] h-14 px-5 text-foreground placeholder:text-slate-400 focus:ring-2 focus:ring-primary/30 font-['Plus_Jakarta_Sans'] font-medium";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -72,7 +83,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && !isLoading) {
-      navigate('/dashboard');
+      navigate('/home');
     }
   }, [user, isLoading, navigate]);
 
@@ -83,6 +94,14 @@ const Auth = () => {
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
+
+  const handleKingschatLogin = () => {
+    // TODO: Implement Kingschat OAuth when available
+    toast({
+      title: 'Coming Soon',
+      description: 'Kingschat login will be available soon.',
+    });
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,43 +332,46 @@ const Auth = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[hsl(200,80%,90%)] via-[hsl(200,70%,95%)] to-[hsl(200,60%,98%)]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground text-body-medium">Loading...</p>
+          <p className="text-slate-600 font-['Plus_Jakarta_Sans'] font-medium">Loading...</p>
         </div>
       </div>
     );
   }
 
+  // Sky blue gradient background
+  const bgGradient = "bg-gradient-to-b from-[hsl(200,80%,90%)] via-[hsl(200,70%,95%)] to-[hsl(200,60%,98%)]";
+
   // OTP Verification Screen
   if (signupStep === 'otp') {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className={`min-h-screen ${bgGradient} flex flex-col`}>
         {/* Top App Bar */}
-        <header className="top-app-bar">
+        <header className="flex items-center gap-2 h-16 px-4">
           <button
             onClick={handleBackToForm}
-            className="p-2 -ml-2 rounded-full hover:bg-surface-variant/50 transition-colors touch-target"
+            className="p-2 -ml-2 rounded-full hover:bg-white/30 transition-colors touch-target"
           >
-            <ArrowLeft className="h-6 w-6 text-foreground" />
+            <ArrowLeft className="h-6 w-6 text-slate-700" />
           </button>
-          <h1 className="text-title-large flex-1">Verify Email</h1>
+          <h1 className="text-title-large flex-1 font-['Plus_Jakarta_Sans'] font-bold text-slate-800">Verify Email</h1>
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-safe-nav">
-          <div className="w-full max-w-sm space-y-8">
+          <div className={`w-full max-w-sm ${glassCard} p-8 space-y-8`}>
             {/* Icon */}
             <div className="flex flex-col items-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                 <Mail className="h-10 w-10 text-primary" />
               </div>
               <div className="text-center space-y-1">
-                <h2 className="text-headline-small text-foreground">Check your email</h2>
-                <p className="text-body-medium text-muted-foreground">
+                <h2 className="text-headline-small font-['Outfit'] font-black uppercase italic tracking-tighter text-slate-800">Check your email</h2>
+                <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
                   We sent a verification code to
                 </p>
-                <p className="text-body-large font-medium text-foreground">{email}</p>
+                <p className="font-['Plus_Jakarta_Sans'] font-bold text-slate-800">{email}</p>
               </div>
             </div>
 
@@ -369,7 +391,7 @@ const Auth = () => {
                     <InputOTPSlot 
                       key={index} 
                       index={index} 
-                      className="w-12 h-14 text-xl rounded-xl border-2 border-outline-variant bg-surface-container-low focus:border-primary focus:ring-0"
+                      className="w-12 h-14 text-xl rounded-xl border-0 bg-white/80 focus:ring-2 focus:ring-primary/30 font-['Plus_Jakarta_Sans'] font-bold"
                     />
                   ))}
                 </InputOTPGroup>
@@ -377,13 +399,13 @@ const Auth = () => {
             </div>
 
             {otpError && (
-              <p className="text-body-small text-destructive text-center">{otpError}</p>
+              <p className="text-body-small text-destructive text-center font-['Plus_Jakarta_Sans']">{otpError}</p>
             )}
 
             {/* Verify Button */}
             <Button 
               onClick={handleVerifyOTP}
-              className="w-full h-14"
+              className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg"
               disabled={isSubmitting || otpValue.length !== 6}
             >
               {isSubmitting ? 'Verifying...' : 'Verify & Create Account'}
@@ -391,14 +413,14 @@ const Auth = () => {
 
             {/* Resend */}
             <div className="text-center">
-              <p className="text-body-medium text-muted-foreground">
+              <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
                 Didn't receive the code?{' '}
                 {resendCooldown > 0 ? (
-                  <span className="text-foreground font-medium">Resend in {resendCooldown}s</span>
+                  <span className="text-slate-800 font-bold">Resend in {resendCooldown}s</span>
                 ) : (
                   <button
                     onClick={handleResendOTP}
-                    className="text-primary font-medium hover:underline"
+                    className="text-primary font-bold hover:underline"
                     disabled={isSubmitting}
                   >
                     Resend
@@ -415,12 +437,12 @@ const Auth = () => {
   // Creating Account Screen
   if (signupStep === 'creating') {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <div className="flex flex-col items-center gap-6">
+      <div className={`min-h-screen ${bgGradient} flex flex-col items-center justify-center px-6`}>
+        <div className={`${glassCard} p-8 flex flex-col items-center gap-6`}>
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           <div className="text-center space-y-2">
-            <h2 className="text-title-large text-foreground">Creating your account</h2>
-            <p className="text-body-medium text-muted-foreground">Please wait a moment...</p>
+            <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Creating your account</h2>
+            <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">Please wait a moment...</p>
           </div>
         </div>
       </div>
@@ -428,401 +450,417 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`min-h-screen ${bgGradient} flex flex-col`}>
       {/* Header with Logo */}
       <div className="flex flex-col items-center pt-12 pb-6 px-6">
-        <img src={gylfLogo} alt="GYLF" className="w-20 h-20 mb-4" />
-        <h1 className="text-headline-small text-foreground font-medium">GYLF Portal</h1>
-        <p className="text-body-medium text-muted-foreground mt-1">
-          {authMode === 'signin' ? 'Welcome back!' : 'Join the movement'}
+        <img src={gylfLogo} alt="GYLF" className="w-24 h-24 mb-6 drop-shadow-lg" />
+        <h1 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-4xl text-[hsl(220,80%,50%)]">GYLF</h1>
+        <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-3xl text-slate-800 -mt-1">MOBILE</h2>
+        <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-500 mt-3 tracking-widest text-xs uppercase">
+          Empowering Youth for Global Impact
         </p>
       </div>
 
       {/* Form Container */}
       <div className="flex-1 px-6 pb-safe-nav">
-        <div className="w-full max-w-sm mx-auto">
+        <div className="w-full max-w-sm mx-auto space-y-6">
+          
           {authMode === 'signin' ? (
-            /* Sign In Form */
-            <form onSubmit={handleSignIn} className="space-y-5">
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`pl-12 ${errors.email ? 'border-destructive' : ''}`}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-body-small text-destructive">{errors.email}</p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={`pl-12 pr-12 ${errors.password ? 'border-destructive' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-body-small text-destructive">{errors.password}</p>
-                )}
-              </div>
-
-              {/* Forgot Password Link */}
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={() => switchMode('forgot')}
-                  className="text-body-small text-primary hover:underline"
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              {/* Sign In Button */}
-              <Button 
-                type="submit" 
-                className="w-full h-14 mt-4" 
-                disabled={isSubmitting}
+            <>
+              {/* Kingschat Login Button */}
+              <Button
+                type="button"
+                onClick={handleKingschatLogin}
+                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3"
               >
-                {isSubmitting ? 'Signing in...' : 'Sign In'}
+                <MessageCircle className="h-6 w-6" />
+                Login with Kingschat
               </Button>
 
+              {/* Divider */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-slate-300" />
+                <span className="font-['Plus_Jakarta_Sans'] font-medium text-slate-400 text-sm tracking-widest uppercase">Or use email</span>
+                <div className="flex-1 h-px bg-slate-300" />
+              </div>
+
+              {/* Glass Card Form */}
+              <div className={`${glassCard} p-6`}>
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  {/* Email Field */}
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="EMAIL ADDRESS"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`${glassInput} ${errors.email ? 'ring-2 ring-destructive/50' : ''}`}
+                    />
+                    {errors.email && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.email}</p>
+                    )}
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="PASSWORD"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={`${glassInput} pr-12 ${errors.password ? 'ring-2 ring-destructive/50' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.password}</p>
+                    )}
+                  </div>
+
+                  {/* Forgot Password Link */}
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => switchMode('forgot')}
+                      className="text-body-small text-primary font-['Plus_Jakarta_Sans'] font-bold hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  {/* Sign In Button */}
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Signing in...' : 'Enter Mobile App'}
+                  </Button>
+                </form>
+              </div>
+
               {/* Switch to Sign Up */}
-              <div className="text-center pt-4">
-                <p className="text-body-medium text-muted-foreground">
+              <div className="text-center pt-2">
+                <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
                   Don't have an account?{' '}
                   <button
                     type="button"
                     onClick={() => switchMode('signup')}
-                    className="text-primary font-medium hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     Sign Up
                   </button>
                 </p>
               </div>
-            </form>
+            </>
           ) : authMode === 'forgot' ? (
             /* Forgot Password Form */
             resetEmailSent ? (
-              <div className="space-y-6 text-center">
+              <div className={`${glassCard} p-8 space-y-6 text-center`}>
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                     <Mail className="h-10 w-10 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <h2 className="text-headline-small text-foreground">Check your email</h2>
-                    <p className="text-body-medium text-muted-foreground">
+                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Check your email</h2>
+                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
                       We've sent a password reset link to
                     </p>
-                    <p className="text-body-large font-medium text-foreground">{email}</p>
+                    <p className="font-['Plus_Jakarta_Sans'] font-bold text-slate-800">{email}</p>
                   </div>
                 </div>
                 
-                <p className="text-body-small text-muted-foreground">
+                <p className="text-body-small font-['Plus_Jakarta_Sans'] text-slate-500">
                   Didn't receive the email? Check your spam folder or try again.
                 </p>
 
                 <Button 
                   variant="outline"
-                  className="w-full h-14"
+                  className="w-full h-14 rounded-[1rem] border-2 border-slate-300 font-['Outfit'] font-black uppercase italic tracking-tighter"
                   onClick={() => switchMode('signin')}
                 >
                   Back to Sign In
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleForgotPassword} className="space-y-5">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
-                    <KeyRound className="h-8 w-8 text-primary" />
+              <div className={`${glassCard} p-6`}>
+                <form onSubmit={handleForgotPassword} className="space-y-5">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <KeyRound className="h-8 w-8 text-primary" />
+                    </div>
+                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Forgot Password?</h2>
+                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600 mt-2">
+                      Enter your email and we'll send you a reset link
+                    </p>
                   </div>
-                  <h2 className="text-title-large text-foreground">Forgot Password?</h2>
-                  <p className="text-body-medium text-muted-foreground mt-2">
-                    Enter your email and we'll send you a reset link
-                  </p>
-                </div>
 
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <label className="text-label-large text-foreground">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  {/* Email Field */}
+                  <div className="space-y-2">
                     <Input
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="EMAIL ADDRESS"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className={`pl-12 ${errors.email ? 'border-destructive' : ''}`}
+                      className={`${glassInput} ${errors.email ? 'ring-2 ring-destructive/50' : ''}`}
                     />
+                    {errors.email && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.email}</p>
+                    )}
                   </div>
-                  {errors.email && (
-                    <p className="text-body-small text-destructive">{errors.email}</p>
-                  )}
-                </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-14" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Reset Link'}
-                </Button>
-
-                <div className="text-center pt-4">
-                  <button
-                    type="button"
-                    onClick={() => switchMode('signin')}
-                    className="text-body-medium text-primary font-medium hover:underline inline-flex items-center gap-2"
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg" 
+                    disabled={isSubmitting}
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Sign In
-                  </button>
-                </div>
-              </form>
+                    {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                  </Button>
+
+                  <div className="text-center pt-4">
+                    <button
+                      type="button"
+                      onClick={() => switchMode('signin')}
+                      className="font-['Plus_Jakarta_Sans'] font-bold text-primary hover:underline inline-flex items-center gap-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              </div>
             )
           ) : authMode === 'reset' ? (
             /* Reset Password Form */
             passwordResetSuccess ? (
-              <div className="space-y-6 text-center">
+              <div className={`${glassCard} p-8 space-y-6 text-center`}>
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                     <CheckCircle className="h-10 w-10 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <h2 className="text-headline-small text-foreground">Password Reset!</h2>
-                    <p className="text-body-medium text-muted-foreground">
+                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Password Reset!</h2>
+                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
                       Your password has been updated successfully.
                     </p>
                   </div>
                 </div>
 
                 <Button 
-                  className="w-full h-14"
+                  className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg"
                   onClick={() => switchMode('signin')}
                 >
                   Sign In
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleResetPassword} className="space-y-5">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
-                    <Lock className="h-8 w-8 text-primary" />
+              <div className={`${glassCard} p-6`}>
+                <form onSubmit={handleResetPassword} className="space-y-5">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Create New Password</h2>
+                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600 mt-2">
+                      Enter your new password below
+                    </p>
                   </div>
-                  <h2 className="text-title-large text-foreground">Create New Password</h2>
-                  <p className="text-body-medium text-muted-foreground mt-2">
-                    Enter your new password below
-                  </p>
-                </div>
 
-                {/* New Password Field */}
-                <div className="space-y-2">
-                  <label className="text-label-large text-foreground">New Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={`pl-12 pr-12 ${errors.password ? 'border-destructive' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
+                  {/* New Password Field */}
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="NEW PASSWORD"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={`${glassInput} pr-12 ${errors.password ? 'ring-2 ring-destructive/50' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.password}</p>
+                    )}
                   </div>
-                  {errors.password && (
-                    <p className="text-body-small text-destructive">{errors.password}</p>
-                  )}
-                </div>
 
-                {/* Confirm Password Field */}
-                <div className="space-y-2">
-                  <label className="text-label-large text-foreground">Confirm Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`pl-12 pr-12 ${errors.confirmPassword ? 'border-destructive' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
+                  {/* Confirm Password Field */}
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="CONFIRM PASSWORD"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`${glassInput} pr-12 ${errors.confirmPassword ? 'ring-2 ring-destructive/50' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.confirmPassword}</p>
+                    )}
                   </div>
-                  {errors.confirmPassword && (
-                    <p className="text-body-small text-destructive">{errors.confirmPassword}</p>
-                  )}
-                </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-14" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Updating...' : 'Update Password'}
-                </Button>
-              </form>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </form>
+              </div>
             )
           ) : (
             /* Sign Up Form */
-            <form onSubmit={handleSignUpInitiate} className="space-y-4">
-              {/* Full Name Field */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className={`pl-12 ${errors.fullName ? 'border-destructive' : ''}`}
-                  />
-                </div>
-                {errors.fullName && (
-                  <p className="text-body-small text-destructive">{errors.fullName}</p>
-                )}
-              </div>
-
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`pl-12 ${errors.email ? 'border-destructive' : ''}`}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-body-small text-destructive">{errors.email}</p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={`pl-12 pr-12 ${errors.password ? 'border-destructive' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-body-small text-destructive">{errors.password}</p>
-                )}
-              </div>
-
-              {/* Confirm Password Field */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">Confirm Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`pl-12 pr-12 ${errors.confirmPassword ? 'border-destructive' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <p className="text-body-small text-destructive">{errors.confirmPassword}</p>
-                )}
-              </div>
-
-              {/* Referral Code (Optional) */}
-              <div className="space-y-2">
-                <label className="text-label-large text-foreground">
-                  Referral Code <span className="text-muted-foreground font-normal">(optional)</span>
-                </label>
-                <div className="relative">
-                  <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Enter referral code"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    className="pl-12"
-                  />
-                </div>
-              </div>
-
-              {/* Sign Up Button */}
-              <Button 
-                type="submit" 
-                className="w-full h-14 mt-4" 
-                disabled={isSubmitting}
+            <>
+              {/* Kingschat Signup Button */}
+              <Button
+                type="button"
+                onClick={handleKingschatLogin}
+                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3"
               >
-                {isSubmitting ? 'Sending verification...' : 'Continue'}
+                <MessageCircle className="h-6 w-6" />
+                Sign up with Kingschat
               </Button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-slate-300" />
+                <span className="font-['Plus_Jakarta_Sans'] font-medium text-slate-400 text-sm tracking-widest uppercase">Or use email</span>
+                <div className="flex-1 h-px bg-slate-300" />
+              </div>
+
+              <div className={`${glassCard} p-6`}>
+                <form onSubmit={handleSignUpInitiate} className="space-y-4">
+                  {/* Full Name Field */}
+                  <div className="space-y-2">
+                    <Input
+                      type="text"
+                      placeholder="FULL NAME"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className={`${glassInput} ${errors.fullName ? 'ring-2 ring-destructive/50' : ''}`}
+                    />
+                    {errors.fullName && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.fullName}</p>
+                    )}
+                  </div>
+
+                  {/* Email Field */}
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="EMAIL ADDRESS"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`${glassInput} ${errors.email ? 'ring-2 ring-destructive/50' : ''}`}
+                    />
+                    {errors.email && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.email}</p>
+                    )}
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="PASSWORD"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={`${glassInput} pr-12 ${errors.password ? 'ring-2 ring-destructive/50' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.password}</p>
+                    )}
+                  </div>
+
+                  {/* Confirm Password Field */}
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="CONFIRM PASSWORD"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`${glassInput} pr-12 ${errors.confirmPassword ? 'ring-2 ring-destructive/50' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.confirmPassword}</p>
+                    )}
+                  </div>
+
+                  {/* Referral Code (Optional) */}
+                  <div className="space-y-2">
+                    <Input
+                      type="text"
+                      placeholder="REFERRAL CODE (OPTIONAL)"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      className={glassInput}
+                    />
+                  </div>
+
+                  {/* Sign Up Button */}
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg mt-2" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Sending verification...' : 'Continue'}
+                  </Button>
+                </form>
+              </div>
 
               {/* Switch to Sign In */}
               <div className="text-center pt-2">
-                <p className="text-body-medium text-muted-foreground">
+                <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
                   Already have an account?{' '}
                   <button
                     type="button"
                     onClick={() => switchMode('signin')}
-                    className="text-primary font-medium hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     Sign In
                   </button>
                 </p>
               </div>
-            </form>
+            </>
           )}
         </div>
       </div>
