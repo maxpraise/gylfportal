@@ -44,8 +44,8 @@ type SignupStep = 'form' | 'otp' | 'creating';
 // Glassmorphism card class
 const glassCard = "bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 rounded-[1.5rem]";
 
-// Input styling - clean white background
-const glassInput = "bg-white dark:bg-slate-800 border-0 rounded-[1rem] h-14 px-5 text-foreground placeholder:text-slate-400 focus:ring-2 focus:ring-primary/30 font-['Plus_Jakarta_Sans'] font-medium shadow-sm";
+// Input styling - clean white background with subtle depth
+const glassInput = "bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 rounded-[1rem] h-14 px-5 text-foreground placeholder:text-slate-400 focus:ring-2 focus:ring-primary/30 focus:border-primary/30 font-['Plus_Jakarta_Sans'] font-medium shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.12)]";
 
 const Auth = () => {
   const navigate = useNavigate();
