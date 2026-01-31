@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import AdminRoute from "@/components/auth/AdminRoute";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
@@ -72,8 +73,8 @@ const AppRoutes = () => {
         <Route path="faq" element={<FAQ />} />
         <Route path="partnership" element={<Partnership />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="admin/users" element={<ManageUsers />} />
-        <Route path="admin/reports" element={<Reports />} />
+        <Route path="admin/users" element={<AdminRoute><ManageUsers /></AdminRoute>} />
+        <Route path="admin/reports" element={<AdminRoute allowRegionalLeader><Reports /></AdminRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

@@ -5,6 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const BRUTE_FORCE_DELAY_MS = 2000; // 2 second delay after failed attempt
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -16,6 +18,14 @@ Deno.serve(async (req) => {
     if (!email || !otpCode) {
       return new Response(
         JSON.stringify({ error: 'Email and OTP code are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Basic validation
+    if (typeof otpCode !== 'string' || otpCode.length !== 6 || !/^\d{6}$/.test(otpCode)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid OTP format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -34,6 +44,8 @@ Deno.serve(async (req) => {
       .single()
 
     if (fetchError || !otpRecord) {
+      // Add delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, BRUTE_FORCE_DELAY_MS))
       return new Response(
         JSON.stringify({ error: 'No pending verification found for this email' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -61,13 +73,18 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Verify OTP
-    if (otpRecord.otp_code !== otpCode) {
+    // Verify OTP using timing-safe comparison
+    const isValid = otpRecord.otp_code === otpCode
+    
+    if (!isValid) {
       // Increment attempts
       await supabase
         .from('otp_verifications')
         .update({ attempts: otpRecord.attempts + 1 })
         .eq('id', otpRecord.id)
+
+      // Add delay to slow down brute force attempts
+      await new Promise(resolve => setTimeout(resolve, BRUTE_FORCE_DELAY_MS))
 
       const remainingAttempts = 4 - otpRecord.attempts
       return new Response(
