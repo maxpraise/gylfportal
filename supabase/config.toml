@@ -2,3 +2,6 @@ project_id = "lpaexuyhlewnyppjbwmj"
 
 [functions.kingschat-auth]
 verify_jwt = false
+
+[functions.kingschat-config]
+verify_jwt = false
