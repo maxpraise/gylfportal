@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCircle, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import gylfLogo from '@/assets/gylf-logo.png';
 import { loginWithKingschat } from '@/lib/kingschatAuth';
+import { KingschatIcon } from '@/components/icons/KingschatIcon';
 
 // Import custom fonts
 import '@fontsource/outfit/900.css';
@@ -501,7 +502,7 @@ const Auth = () => {
                 {isKingschatLoading ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <MessageCircle className="h-6 w-6" />
+                  <KingschatIcon size={24} />
                 )}
                 {isKingschatLoading ? 'Connecting...' : 'Login with Kingschat'}
               </Button>
@@ -771,7 +772,7 @@ const Auth = () => {
                 {isKingschatLoading ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <MessageCircle className="h-6 w-6" />
+                  <KingschatIcon size={24} />
                 )}
                 {isKingschatLoading ? 'Connecting...' : 'Sign up with Kingschat'}
               </Button>
