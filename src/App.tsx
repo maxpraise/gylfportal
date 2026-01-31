@@ -19,6 +19,7 @@ import Reports from "./pages/admin/Reports";
 import NotFound from "./pages/NotFound";
 import HeartInitiative from "./pages/HeartInitiative";
 import GYLFAcademy from "./pages/GYLFAcademy";
+import CourseDetail from "./pages/CourseDetail";
 import ConnectMeetings from "./pages/ConnectMeetings";
 import PrayerCloud from "./pages/PrayerCloud";
 import ShareTestimony from "./pages/ShareTestimony";
@@ -63,6 +64,7 @@ const AppRoutes = () => {
         <Route path="resources" element={<Resources />} />
         <Route path="heart" element={<HeartInitiative />} />
         <Route path="academy" element={<GYLFAcademy />} />
+        <Route path="academy/:id" element={<CourseDetail />} />
         <Route path="meetings" element={<ConnectMeetings />} />
         <Route path="prayer" element={<PrayerCloud />} />
         <Route path="testimony" element={<ShareTestimony />} />

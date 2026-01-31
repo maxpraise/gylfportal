@@ -176,6 +176,54 @@ export type Database = {
           },
         ]
       }
+      course_progress: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          id: string
+          last_watched_at: string
+          profile_id: string
+          progress_percentage: number
+          started_at: string
+          watch_time_seconds: number
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          id?: string
+          last_watched_at?: string
+          profile_id: string
+          progress_percentage?: number
+          started_at?: string
+          watch_time_seconds?: number
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          id?: string
+          last_watched_at?: string
+          profile_id?: string
+          progress_percentage?: number
+          started_at?: string
+          watch_time_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       growth_paths: {
         Row: {
           badge_color: string | null
@@ -818,6 +866,95 @@ export type Database = {
           },
         ]
       }
+      user_certificates: {
+        Row: {
+          certificate_number: string
+          course_id: string
+          earned_at: string
+          id: string
+          points_awarded: number
+          profile_id: string
+        }
+        Insert: {
+          certificate_number: string
+          course_id: string
+          earned_at?: string
+          id?: string
+          points_awarded?: number
+          profile_id: string
+        }
+        Update: {
+          certificate_number?: string
+          course_id?: string
+          earned_at?: string
+          id?: string
+          points_awarded?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_certificates_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_points: {
+        Row: {
+          courses_completed: number
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          profile_id: string
+          quizzes_passed: number
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          courses_completed?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          profile_id: string
+          quizzes_passed?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          courses_completed?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          profile_id?: string
+          quizzes_passed?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_points_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_by: string | null
@@ -847,6 +984,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_certificate_number: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
       get_current_region_id: { Args: never; Returns: string }
