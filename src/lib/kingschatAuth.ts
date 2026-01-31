@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 // Import Kingschat styles
 import 'kingschat-web-sdk/dist/stylesheets/style.min.css';
 
-// Get client ID from environment
-const KINGSCHAT_CLIENT_ID = import.meta.env.VITE_KINGSCHAT_CLIENT_ID;
+// Cache the client ID after first fetch
+let cachedClientId: string | null = null;
 
 export interface KingschatAuthResult {
   success: boolean;
@@ -16,6 +16,34 @@ export interface KingschatTokenResponse {
   accessToken: string;
   expiresInMillis: number;
   refreshToken: string;
+}
+
+/**
+ * Fetches the Kingschat Client ID from the backend
+ */
+async function getKingschatClientId(): Promise<string | null> {
+  if (cachedClientId) {
+    return cachedClientId;
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke('kingschat-config');
+    
+    if (error) {
+      console.error('Error fetching Kingschat config:', error);
+      return null;
+    }
+
+    if (data?.clientId) {
+      cachedClientId = data.clientId;
+      return cachedClientId;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching Kingschat config:', error);
+    return null;
+  }
 }
 
 /**
@@ -49,7 +77,9 @@ async function fetchKingschatUserInfo(accessToken: string): Promise<any> {
  * Opens a popup for Kingschat authentication
  */
 export async function loginWithKingschat(): Promise<KingschatAuthResult> {
-  if (!KINGSCHAT_CLIENT_ID) {
+  const clientId = await getKingschatClientId();
+  
+  if (!clientId) {
     console.error('KINGSCHAT_CLIENT_ID is not configured');
     return { 
       success: false, 
@@ -60,7 +90,7 @@ export async function loginWithKingschat(): Promise<KingschatAuthResult> {
   try {
     // Step 1: Get tokens from Kingschat SDK
     const tokenResponse: KingschatTokenResponse = await kingsChatWebSdk.login({
-      clientId: KINGSCHAT_CLIENT_ID,
+      clientId: clientId,
       scopes: ['send_chat_message'],
     });
 
@@ -120,14 +150,16 @@ export async function loginWithKingschat(): Promise<KingschatAuthResult> {
  * Refreshes Kingschat authentication token
  */
 export async function refreshKingschatToken(refreshToken: string): Promise<KingschatTokenResponse | null> {
-  if (!KINGSCHAT_CLIENT_ID) {
+  const clientId = await getKingschatClientId();
+  
+  if (!clientId) {
     console.error('KINGSCHAT_CLIENT_ID is not configured');
     return null;
   }
 
   try {
     const tokenResponse = await kingsChatWebSdk.refreshAuthenticationToken({
-      clientId: KINGSCHAT_CLIENT_ID,
+      clientId: clientId,
       refreshToken,
     });
 
