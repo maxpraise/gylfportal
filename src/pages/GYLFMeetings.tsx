@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { validateImageFiles, generateUploadPath } from "@/lib/fileValidation";
 import { Calendar, Users, MapPin, Clock, Video, Globe, Plus, FileText, DollarSign, UserPlus } from "lucide-react";
 
 interface Meeting {
@@ -70,15 +71,17 @@ const GYLFMeetings = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload images
+      // Upload images with file validation (bucket is now private)
       const imageUrls: string[] = [];
       for (const image of selectedImages) {
-        const fileName = `meetings/${profile.id}/${Date.now()}-${image.name}`;
-        const { error: uploadError } = await supabase.storage.from("gylf-uploads").upload(fileName, image);
+        const storagePath = generateUploadPath(profile.id, image.name, 'meetings');
+        const { error: uploadError } = await supabase.storage
+          .from("gylf-uploads")
+          .upload(storagePath, image);
 
         if (!uploadError) {
-          const { data: urlData } = supabase.storage.from("gylf-uploads").getPublicUrl(fileName);
-          imageUrls.push(urlData.publicUrl);
+          // Store the path (not public URL since bucket is now private)
+          imageUrls.push(storagePath);
         }
       }
 
@@ -338,9 +341,22 @@ const GYLFMeetings = () => {
                 <Input
                   id="images"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   multiple
-                  onChange={(e) => setSelectedImages(Array.from(e.target.files || []).slice(0, 5))}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []).slice(0, 5);
+                    const result = validateImageFiles(files);
+                    if (!result.valid) {
+                      toast({
+                        title: "Invalid Files",
+                        description: result.error,
+                        variant: "destructive",
+                      });
+                      e.target.value = "";
+                      return;
+                    }
+                    setSelectedImages(result.files);
+                  }}
                   className="cursor-pointer"
                 />
                 {selectedImages.length > 0 && (

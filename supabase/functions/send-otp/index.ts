@@ -9,6 +9,8 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+const RATE_LIMIT_SECONDS = 60; // Minimum time between OTP requests for same email
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,11 +26,39 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 255) {
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const mailtrapApiKey = Deno.env.get("MAILTRAP_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting: Check if an OTP was recently requested for this email
+    const rateLimitTime = new Date(Date.now() - RATE_LIMIT_SECONDS * 1000).toISOString();
+    const { data: recentOtp } = await supabase
+      .from("otp_verifications")
+      .select("created_at")
+      .eq("email", email)
+      .gte("created_at", rateLimitTime)
+      .maybeSingle();
+
+    if (recentOtp) {
+      return new Response(
+        JSON.stringify({ error: "Please wait 60 seconds before requesting a new code" }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Generate OTP
     const otpCode = generateOTP();
@@ -54,6 +84,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Sanitize fullName for display in email (prevent XSS in email clients)
+    const sanitizedName = fullName ? fullName.replace(/[<>&"']/g, '').slice(0, 100) : '';
 
     // Send email via Mailtrap
     const emailResponse = await fetch("https://send.api.mailtrap.io/api/send", {
@@ -89,7 +122,7 @@ Deno.serve(async (req) => {
                 <h1>🌍 Global Youth Leaders' Forum</h1>
               </div>
               <div class="content">
-                <p>Hello${fullName ? ` ${fullName}` : ""},</p>
+                <p>Hello${sanitizedName ? ` ${sanitizedName}` : ""},</p>
                 <p>Welcome to GYLF Portal! Use the verification code below to complete your registration:</p>
                 <div class="otp-code">${otpCode}</div>
                 <p><strong>This code expires in 10 minutes.</strong></p>

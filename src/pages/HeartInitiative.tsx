@@ -14,6 +14,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
+  validateImageFiles,
+  validateCsvFiles,
+  generateUploadPath,
+} from '@/lib/fileValidation';
+import { uploadFileWithSignedUrl } from '@/lib/signedUrls';
+import {
   Form,
   FormControl,
   FormField,
@@ -130,7 +136,43 @@ const HeartInitiative = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedImages(Array.from(e.target.files).slice(0, 5));
+      const files = Array.from(e.target.files).slice(0, 5);
+      const result = validateImageFiles(files);
+      
+      if (!result.valid) {
+        toast({
+          title: 'Invalid Files',
+          description: result.error,
+          variant: 'destructive',
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setSelectedImages(result.files);
+    }
+  };
+
+  const handleCsvChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<File | null>>
+  ) => {
+    if (e.target.files && e.target.files[0]) {
+      const result = validateCsvFiles([e.target.files[0]]);
+      
+      if (!result.valid) {
+        toast({
+          title: 'Invalid File',
+          description: result.error,
+          variant: 'destructive',
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setter(result.files[0]);
+    } else {
+      setter(null);
     }
   };
 
@@ -140,41 +182,34 @@ const HeartInitiative = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload images
+      // Upload images with signed URLs (bucket is now private)
       const imageUrls: string[] = [];
       for (const image of selectedImages) {
-        const fileName = `${profile.id}/${Date.now()}-${image.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('gylf-uploads')
-          .upload(fileName, image);
-
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('gylf-uploads')
-            .getPublicUrl(fileName);
-          imageUrls.push(urlData.publicUrl);
+        const storagePath = generateUploadPath(profile.id, image.name);
+        const result = await uploadFileWithSignedUrl(image, storagePath);
+        if (result) {
+          // Store the path, not the signed URL (paths are permanent, signed URLs expire)
+          imageUrls.push(result.path);
         }
       }
 
-      // Upload CSV files if provided
-      let soulsDataUrl = null;
-      let youthsDataUrl = null;
+      // Upload CSV files if provided (store paths, not URLs)
+      let soulsDataPath = null;
+      let youthsDataPath = null;
 
       if (soulsDataFile) {
-        const fileName = `${profile.id}/souls-${Date.now()}-${soulsDataFile.name}`;
-        const { error } = await supabase.storage.from('gylf-uploads').upload(fileName, soulsDataFile);
+        const storagePath = generateUploadPath(profile.id, soulsDataFile.name, 'souls');
+        const { error } = await supabase.storage.from('gylf-uploads').upload(storagePath, soulsDataFile);
         if (!error) {
-          const { data } = supabase.storage.from('gylf-uploads').getPublicUrl(fileName);
-          soulsDataUrl = data.publicUrl;
+          soulsDataPath = storagePath;
         }
       }
 
       if (youthsDataFile) {
-        const fileName = `${profile.id}/youths-${Date.now()}-${youthsDataFile.name}`;
-        const { error } = await supabase.storage.from('gylf-uploads').upload(fileName, youthsDataFile);
+        const storagePath = generateUploadPath(profile.id, youthsDataFile.name, 'youths');
+        const { error } = await supabase.storage.from('gylf-uploads').upload(storagePath, youthsDataFile);
         if (!error) {
-          const { data } = supabase.storage.from('gylf-uploads').getPublicUrl(fileName);
-          youthsDataUrl = data.publicUrl;
+          youthsDataPath = storagePath;
         }
       }
 
@@ -195,8 +230,8 @@ const HeartInitiative = () => {
         testimonies: formData.testimonies || null,
         summary: formData.summary || null,
         image_urls: imageUrls,
-        souls_data_url: soulsDataUrl,
-        youths_data_url: youthsDataUrl,
+        souls_data_url: soulsDataPath,
+        youths_data_url: youthsDataPath,
       });
 
       if (error) throw error;
@@ -508,8 +543,8 @@ const HeartInitiative = () => {
                         <Input
                           id="souls_data"
                           type="file"
-                          accept=".csv"
-                          onChange={(e) => setSoulsDataFile(e.target.files?.[0] || null)}
+                          accept=".csv,text/csv"
+                          onChange={(e) => handleCsvChange(e, setSoulsDataFile)}
                           className="cursor-pointer"
                         />
                       </div>
@@ -518,8 +553,8 @@ const HeartInitiative = () => {
                         <Input
                           id="youths_data"
                           type="file"
-                          accept=".csv"
-                          onChange={(e) => setYouthsDataFile(e.target.files?.[0] || null)}
+                          accept=".csv,text/csv"
+                          onChange={(e) => handleCsvChange(e, setYouthsDataFile)}
                           className="cursor-pointer"
                         />
                       </div>
