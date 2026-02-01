@@ -17,18 +17,18 @@ export interface NewsItem {
   author?: string;
 }
 
-interface ApiResponse {
-  status: string;
-  data: Array<{
-    id: string;
-    title: string;
-    excerpt: string;
-    content: string;
-    image: string;
-    date: string;
-    category?: string;
-    author?: string;
-  }>;
+interface ApiPostItem {
+  postID: string;
+  postTitle: string;
+  postDesc: string;
+  postCont: string;
+  postDate: string;
+  postImg: string;
+  post_catname?: string;
+  postVideo?: string;
+  postAudio?: string;
+  postSlug?: string;
+  likeCount?: string;
 }
 
 const ImpactReportsList = () => {
@@ -52,18 +52,18 @@ const ImpactReportsList = () => {
       const response = await fetch(
         `https://globalyouthleadersforum.org/webapi/api.php?limit=9&offset=${currentOffset}`
       );
-      const data: ApiResponse = await response.json();
+      const data: ApiPostItem[] = await response.json();
 
-      if (data.status === 'success' && data.data) {
-        const mappedNews: NewsItem[] = data.data.map((item) => ({
-          id: item.id,
-          title: item.title,
-          excerpt: item.excerpt || '',
-          content: item.content || '',
-          image: item.image,
-          date: item.date,
-          category: item.category || 'News',
-          author: item.author,
+      if (Array.isArray(data) && data.length > 0) {
+        const mappedNews: NewsItem[] = data.map((item) => ({
+          id: item.postID,
+          title: item.postTitle,
+          excerpt: item.postDesc || '',
+          content: item.postCont || '',
+          image: item.postImg,
+          date: item.postDate,
+          category: item.post_catname || 'News',
+          author: undefined,
         }));
 
         if (append) {
