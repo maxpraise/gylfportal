@@ -18,17 +18,6 @@ export interface KingschatTokenResponse {
   refreshToken: string;
 }
 
-export interface KingschatUserProfile {
-  id: string;
-  email?: string;
-  name?: string;
-  username?: string;
-  phone_number?: string;
-  gender?: string;
-  birth_date_millis?: number;
-  avatar?: string;
-}
-
 /**
  * Fetches the Kingschat Client ID from the backend
  */
@@ -58,13 +47,12 @@ async function getKingschatClientId(): Promise<string | null> {
 }
 
 /**
- * Fetches user profile from Kingschat using the access token
- * Using the correct endpoint: https://connect.kingsch.at/developer/api/profile
+ * Fetches user information from Kingschat using the access token
  */
-async function fetchKingschatUserProfile(accessToken: string): Promise<KingschatUserProfile | null> {
+async function fetchKingschatUserInfo(accessToken: string): Promise<any> {
   try {
-    const response = await fetch('https://connect.kingsch.at/developer/api/profile', {
-      method: 'GET',
+    // Kingschat API endpoint for user info
+    const response = await fetch('https://api.kingsch.at/v1/users/me', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
@@ -72,17 +60,14 @@ async function fetchKingschatUserProfile(accessToken: string): Promise<Kingschat
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch Kingschat profile, status:', response.status);
-      throw new Error('Failed to fetch user profile from Kingschat');
+      throw new Error('Failed to fetch user info from Kingschat');
     }
 
-    const data = await response.json();
-    console.log('Kingschat profile response:', data);
-    
-    // The response contains { profile: { ... } }
-    return data.profile || data;
+    const userData = await response.json();
+    return userData;
   } catch (error) {
-    console.error('Error fetching Kingschat user profile:', error);
+    console.error('Error fetching Kingschat user info:', error);
+    // Return minimal info if API call fails
     return null;
   }
 }
@@ -103,42 +88,24 @@ export async function loginWithKingschat(): Promise<KingschatAuthResult> {
   }
 
   try {
-    console.log('Starting Kingschat login with client ID:', clientId);
-    
     // Step 1: Get tokens from Kingschat SDK
-    // The SDK opens a popup and handles the OAuth flow
     const tokenResponse: KingschatTokenResponse = await kingsChatWebSdk.login({
       clientId: clientId,
       scopes: ['send_chat_message'],
     });
 
-    console.log('Kingschat login successful, received tokens');
-    console.log('Access token received:', tokenResponse.accessToken ? 'Yes' : 'No');
+    console.log('Kingschat login successful, fetching user info...');
 
-    // Step 2: Fetch user profile from Kingschat
-    const userProfile = await fetchKingschatUserProfile(tokenResponse.accessToken);
-    
-    if (!userProfile) {
-      console.error('Failed to fetch user profile');
-      return { success: false, error: 'Failed to fetch your Kingschat profile' };
-    }
+    // Step 2: Fetch user info from Kingschat
+    const userInfo = await fetchKingschatUserInfo(tokenResponse.accessToken);
 
-    console.log('Kingschat user profile:', userProfile);
-
-    // Step 3: Exchange Kingschat tokens for Supabase session via edge function
+    // Step 3: Exchange Kingschat tokens for Supabase session
     const { data, error } = await supabase.functions.invoke('kingschat-auth', {
       body: {
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken,
         expiresInMillis: tokenResponse.expiresInMillis,
-        userInfo: {
-          id: userProfile.id,
-          email: userProfile.email,
-          name: userProfile.name,
-          username: userProfile.username,
-          avatar: userProfile.avatar,
-          phone_number: userProfile.phone_number,
-        },
+        userInfo: userInfo || { id: 'unknown' },
       },
     });
 
@@ -146,8 +113,6 @@ export async function loginWithKingschat(): Promise<KingschatAuthResult> {
       console.error('Error exchanging Kingschat token:', error);
       return { success: false, error: error.message || 'Authentication failed' };
     }
-
-    console.log('Edge function response:', data);
 
     if (data?.token && data?.tokenType) {
       // Verify the magic link token to create a session
