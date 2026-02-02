@@ -20,7 +20,6 @@ import { useNavigate } from 'react-router-dom';
 interface Referral {
   id: string;
   full_name: string;
-  email: string;
   created_at: string;
   avatar_url: string | null;
   total_referrals: number;
@@ -55,10 +54,10 @@ const Referrals = () => {
         setLevels(levelsData);
       }
 
-      // Fetch referrals
+      // Fetch referrals - excluding sensitive fields (email, phone) for privacy
       const { data: referralsData } = await supabase
         .from('profiles')
-        .select('id, full_name, email, created_at, avatar_url, total_referrals, current_level_id')
+        .select('id, full_name, created_at, avatar_url, total_referrals, current_level_id')
         .eq('referred_by_profile_id', profile.id)
         .order('created_at', { ascending: false });
 
@@ -88,18 +87,26 @@ const Referrals = () => {
   };
 
   const filteredReferrals = referrals.filter(
-    (r) =>
-      r.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (r) => r.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Sanitize CSV cell to prevent formula injection
+  const sanitizeCSVCell = (value: string): string => {
+    if (!value) return value;
+    // Prefix dangerous characters with single quote to prevent formula injection
+    if (/^[=+\-@]/.test(value)) {
+      return "'" + value;
+    }
+    // Escape existing quotes
+    return value.replace(/"/g, '""');
+  };
+
   const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Joined Date', 'Level', 'Their Members'];
+    const headers = ['Name', 'Joined Date', 'Level', 'Their Members'];
     const rows = filteredReferrals.map((r) => [
-      r.full_name,
-      r.email,
+      sanitizeCSVCell(r.full_name),
       new Date(r.created_at).toLocaleDateString(),
-      getLevelName(r.current_level_id),
+      sanitizeCSVCell(getLevelName(r.current_level_id)),
       r.total_referrals.toString(),
     ]);
 
@@ -193,7 +200,7 @@ const Referrals = () => {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                placeholder="Search by name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -246,7 +253,6 @@ const Referrals = () => {
                           </Avatar>
                           <div>
                             <p className="font-medium text-foreground">{referral.full_name}</p>
-                            <p className="text-sm text-muted-foreground">{referral.email}</p>
                           </div>
                         </div>
                       </TableCell>
