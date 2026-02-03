@@ -35,6 +35,7 @@ const partnershipSchema = z.object({
   amount: z.string()
     .min(1, 'Amount is required')
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Must be a valid amount greater than 0'),
+  currency: z.string().min(1, 'Please select a currency'),
   payment_method: z.string().min(1, 'Please select a payment method'),
 });
 
@@ -62,6 +63,7 @@ const Partnership = () => {
     defaultValues: {
       category: '',
       amount: '',
+      currency: 'ESP',
       payment_method: '',
     },
   });
@@ -95,7 +97,7 @@ const Partnership = () => {
       const { error } = await supabase.from('partnerships').insert({
         profile_id: profile.id,
         amount: parseFloat(data.amount),
-        currency: 'USD',
+        currency: data.currency,
         payment_method: data.payment_method,
         category: data.category as 'gylf_academy' | 'gylf_conferences' | 'gylf_missions_trips' | 'gylf_outreaches' | 'hslhs' | 'magazine' | 'offerings' | 'sponsor_gytv',
       });
@@ -156,6 +158,17 @@ const Partnership = () => {
       bank_transfer: 'Bank Transfer',
     };
     return labels[method] || method;
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: Record<string, string> = {
+      ESP: '₿',
+      USD: '$',
+      NGN: '₦',
+      GBP: '£',
+      EUR: '€',
+    };
+    return symbols[currency] || currency;
   };
 
   const selectedPaymentMethod = form.watch('payment_method');
@@ -283,10 +296,35 @@ const Partnership = () => {
 
                 <FormField
                   control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Currency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ESP">Espees</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="NGN">NGN</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount (USD)</FormLabel>
+                      <FormLabel>Amount</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -433,7 +471,7 @@ const Partnership = () => {
                       <TableCell>{getCategoryLabel(p.category)}</TableCell>
                       <TableCell>{getPaymentMethodLabel(p.payment_method)}</TableCell>
                       <TableCell className="text-right font-medium">
-                        ${p.amount.toLocaleString()}
+                        {getCurrencySymbol(p.currency)}{p.amount.toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <Badge variant={p.status === 'completed' ? 'default' : 'secondary'}>
