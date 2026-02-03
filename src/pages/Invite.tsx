@@ -17,17 +17,27 @@ import {
 } from 'lucide-react';
 
 const Invite = () => {
-  const { profile } = useAuth();
+  const { profile, isLoading } = useAuth();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const referralLink = `${window.location.origin}/auth?ref=${profile?.referral_code}`;
+  const referralCode = profile?.referral_code || '';
+  const referralLink = `${window.location.origin}/auth?ref=${referralCode}`;
+
+  // Show loading state while profile is being fetched
+  if (isLoading || !profile) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
   
   const inviteMessage = `Join me in the Global Youth Leaders' Forum! 🌍
 
 I'm building a network of young leaders who are making a difference in their communities. 
 
-Use my referral code: ${profile?.referral_code}
+Use my referral code: ${referralCode}
 
 Or join directly here: ${referralLink}
 
