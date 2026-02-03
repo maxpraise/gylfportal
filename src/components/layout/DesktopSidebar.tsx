@@ -17,6 +17,8 @@ import {
   Coins,
   Shield,
   ChevronRight,
+  Bell,
+  Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -68,8 +70,10 @@ const navigation: NavGroup[] = [
   {
     title: 'Administration',
     items: [
+      { icon: Bell, label: 'Notifications', path: '/dashboard/notifications' },
       { icon: Shield, label: 'Manage Users', path: '/dashboard/admin/users', roles: ['admin'] },
       { icon: FileText, label: 'Reports', path: '/dashboard/admin/reports', roles: ['admin', 'regional_leader'] },
+      { icon: Megaphone, label: 'Send Notification', path: '/dashboard/admin/notifications', roles: ['admin'] },
       { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ],
   },

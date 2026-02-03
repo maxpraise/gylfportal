@@ -62,7 +62,6 @@ const MobileHeader = ({ title, onMenuClick }: MobileHeaderProps) => {
           onClick={() => navigate('/dashboard/notifications')}
         >
           <Bell className="h-6 w-6" />
-          <span className="absolute top-2 right-2 h-2 w-2 bg-destructive rounded-full" />
         </Button>
 
         {/* Profile Menu */}
