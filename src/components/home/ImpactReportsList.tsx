@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, ArrowRight, Loader2 } from 'lucide-react';
@@ -128,15 +128,17 @@ const ImpactReportsList = () => {
     return (
       <div className="space-y-3">
         <h2 className="text-title-large font-medium text-foreground">Impact Reports</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="overflow-hidden">
-              <Skeleton className="h-40 w-full" />
-              <CardContent className="p-4 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-1/2" />
-              </CardContent>
+              <div className="flex gap-3 p-3">
+                <Skeleton className="h-20 w-28 flex-shrink-0 rounded-md" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
             </Card>
           ))}
         </div>
@@ -150,45 +152,49 @@ const ImpactReportsList = () => {
         <h2 className="text-title-large font-medium text-foreground">Impact Reports</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-3">
         {news.map((item) => (
           <Card
             key={item.id}
             className="overflow-hidden cursor-pointer group hover:shadow-elevation-2 transition-all"
             onClick={() => handleNewsClick(item)}
           >
-            <div className="aspect-video overflow-hidden bg-surface-container-high">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
-                }}
-              />
+            <div className="flex gap-3 p-3">
+              {/* Thumbnail on the left */}
+              <div className="h-20 w-28 flex-shrink-0 overflow-hidden rounded-md bg-surface-container-high">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              
+              {/* Content on the right */}
+              <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="text-xs">
+                      {item.category}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(item.date)}
+                    </span>
+                  </div>
+                  <h3 className="font-medium text-foreground line-clamp-2 text-sm group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                </div>
+                <div className="flex items-center text-primary text-xs font-medium">
+                  Read More
+                  <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
             </div>
-            <CardContent className="p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  {item.category}
-                </Badge>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(item.date)}
-                </span>
-              </div>
-              <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                {item.title}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {item.excerpt}
-              </p>
-              <div className="flex items-center text-primary text-sm font-medium pt-1">
-                Read More
-                <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </CardContent>
           </Card>
         ))}
       </div>
