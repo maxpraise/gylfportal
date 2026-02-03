@@ -26,6 +26,8 @@ import ShareTestimony from "./pages/ShareTestimony";
 import FAQ from "./pages/FAQ";
 import Partnership from "./pages/Partnership";
 import NewsDetail from "./pages/NewsDetail";
+import Notifications from "./pages/Notifications";
+import SendNotification from "./pages/admin/SendNotification";
 
 const queryClient = new QueryClient();
 
@@ -74,8 +76,10 @@ const AppRoutes = () => {
         <Route path="faq" element={<FAQ />} />
         <Route path="partnership" element={<Partnership />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="admin/users" element={<AdminRoute><ManageUsers /></AdminRoute>} />
         <Route path="admin/reports" element={<AdminRoute allowRegionalLeader><Reports /></AdminRoute>} />
+        <Route path="admin/notifications" element={<AdminRoute><SendNotification /></AdminRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

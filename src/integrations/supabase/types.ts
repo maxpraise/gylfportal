@@ -984,6 +984,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_assign_role: {
+        Args: { _assigner_id: string; _target_role: string }
+        Returns: boolean
+      }
       generate_certificate_number: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
