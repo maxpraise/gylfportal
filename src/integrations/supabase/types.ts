@@ -979,6 +979,171 @@ export type Database = {
         }
         Relationships: []
       }
+      vod_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          profile_id: string
+          updated_at: string
+          video_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          updated_at?: string
+          video_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          updated_at?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vod_comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vod_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "vod_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vod_likes: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vod_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vod_likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "vod_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vod_videos: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          likes_count: number | null
+          published_at: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+          views_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url: string
+          views_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      vod_views: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string | null
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vod_views_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vod_views_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "vod_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

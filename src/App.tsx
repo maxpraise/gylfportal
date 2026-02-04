@@ -28,6 +28,9 @@ import Partnership from "./pages/Partnership";
 import NewsDetail from "./pages/NewsDetail";
 import Notifications from "./pages/Notifications";
 import SendNotification from "./pages/admin/SendNotification";
+import GYTV from "./pages/GYTV";
+import VODVideos from "./pages/VODVideos";
+import VODDetail from "./pages/VODDetail";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +73,9 @@ const AppRoutes = () => {
         <Route path="heart" element={<HeartInitiative />} />
         <Route path="academy" element={<GYLFAcademy />} />
         <Route path="academy/:id" element={<CourseDetail />} />
+        <Route path="gytv" element={<GYTV />} />
+        <Route path="gytv/videos" element={<VODVideos />} />
+        <Route path="gytv/videos/:id" element={<VODDetail />} />
         <Route path="meetings" element={<ConnectMeetings />} />
         <Route path="prayer" element={<PrayerCloud />} />
         <Route path="testimony" element={<ShareTestimony />} />

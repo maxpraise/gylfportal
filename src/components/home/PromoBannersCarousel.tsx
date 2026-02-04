@@ -4,7 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { ExternalLink } from 'lucide-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface PromoBanner {
   id: string;
@@ -61,6 +61,12 @@ const PromoBannersCarousel = () => {
           align: 'start',
           loop: true,
         }}
+        plugins={[
+          Autoplay({
+            delay: 6000,
+            stopOnInteraction: true,
+          }),
+        ]}
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
