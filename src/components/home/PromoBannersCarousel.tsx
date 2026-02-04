@@ -70,28 +70,13 @@ const PromoBannersCarousel = () => {
                 className="overflow-hidden cursor-pointer group border-0 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow"
                 onClick={() => handleBannerClick(banner.external_link)}
               >
-                <AspectRatio ratio={16 / 9}>
-                  <div className="relative w-full h-full">
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title || 'Promo banner'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-primary text-primary-foreground p-2 rounded-full">
-                        <ExternalLink className="h-4 w-4" />
-                      </div>
-                    </div>
-                    {banner.title && (
-                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                        <p className="text-white text-label-large font-medium truncate">
-                          {banner.title}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              <AspectRatio ratio={1600 / 654}>
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title || 'Promo banner'}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
                 </AspectRatio>
               </Card>
             </CarouselItem>
