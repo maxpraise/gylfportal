@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Bell,
   Megaphone,
+  Tv,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -60,6 +61,7 @@ const navigation: NavGroup[] = [
       { icon: Globe, label: 'Resource Center', path: '/dashboard/resources' },
       { icon: Heart, label: 'HEART Initiative', path: '/dashboard/heart' },
       { icon: BookOpen, label: 'GYLF Academy', path: '/dashboard/academy' },
+      { icon: Tv, label: 'GYTV', path: '/dashboard/gytv' },
       { icon: Calendar, label: 'Connect Meetings', path: '/dashboard/meetings' },
       { icon: Coins, label: 'Partnership', path: '/dashboard/partnership' },
     ],
