@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import DOMPurify from 'dompurify';
 import {
   ArrowLeft,
   Calendar,
@@ -317,7 +318,12 @@ const NewsDetail = () => {
           {/* Article Content */}
           <div
             className="prose prose-sm max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: news.content || news.excerpt }}
+            dangerouslySetInnerHTML={{ 
+              __html: DOMPurify.sanitize(news.content || news.excerpt, {
+                ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'span', 'div'],
+                ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel']
+              })
+            }}
           />
 
           {/* Interaction Bar */}
