@@ -97,15 +97,15 @@ const DesktopSidebar = () => {
     .filter((group) => group.items.length > 0);
 
   return (
-    <aside className="hidden lg:flex w-72 bg-surface border-r border-outline-variant flex-col">
+    <aside className="hidden lg:flex w-72 glass-strong border-r-0 flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-outline-variant">
+      <div className="p-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="bg-primary p-2.5 rounded-xl">
+          <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-primary/20">
             <Globe className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-title-medium text-foreground">Global Youth Leaders&apos; Forum</h1>
+            <h1 className="text-title-medium text-foreground font-bold">Global Youth Leaders&apos; Forum</h1>
             <p className="text-body-small text-muted-foreground">Raising Leaders, building the future...</p>
           </div>
         </div>
@@ -115,7 +115,7 @@ const DesktopSidebar = () => {
       <nav className="flex-1 overflow-y-auto p-3">
         {filteredNavigation.map((group) => (
           <div key={group.title} className="mb-6">
-            <h3 className="text-label-medium text-on-surface-variant uppercase tracking-wider mb-2 px-4">
+            <h3 className="text-label-medium text-primary/70 uppercase tracking-wider mb-2 px-4 font-semibold">
               {group.title}
             </h3>
             <ul className="space-y-1">
@@ -126,15 +126,15 @@ const DesktopSidebar = () => {
                     <button
                       onClick={() => navigate(item.path)}
                       className={cn(
-                        'w-full flex items-center gap-3 px-4 py-3 rounded-full text-body-large transition-all duration-200',
+                        'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-body-large transition-all duration-200',
                         isActive
-                          ? 'bg-secondary-container text-secondary-container-foreground font-medium'
-                          : 'text-foreground hover:bg-surface-variant active:bg-surface-variant'
+                          ? 'glass-purple text-primary font-semibold shadow-md'
+                          : 'text-foreground hover:bg-primary/5 active:bg-primary/10'
                       )}
                     >
-                      <item.icon className="h-6 w-6" />
+                      <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
                       <span className="flex-1 text-left">{item.label}</span>
-                      {isActive && <ChevronRight className="h-5 w-5" />}
+                      {isActive && <ChevronRight className="h-5 w-5 text-primary" />}
                     </button>
                   </li>
                 );
@@ -145,7 +145,7 @@ const DesktopSidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-outline-variant">
+      <div className="p-4 border-t border-white/10">
         <p className="text-label-small text-muted-foreground text-center">
           GYLF Communications<br />
           © 2025 All Rights Reserved
@@ -154,5 +154,4 @@ const DesktopSidebar = () => {
     </aside>
   );
 };
-
 export default DesktopSidebar;

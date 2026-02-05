@@ -38,7 +38,7 @@ const DashboardLayout = () => {
   // Mobile Layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background gradient-hero flex flex-col">
         {/* Mobile Header */}
         <MobileHeader
           title={getPageTitle()}
@@ -66,7 +66,7 @@ const DashboardLayout = () => {
 
   // Desktop Layout
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background gradient-hero flex">
       {/* Desktop Sidebar */}
       <DesktopSidebar />
 
