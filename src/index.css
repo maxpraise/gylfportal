@@ -219,6 +219,105 @@
 }
 
 @layer components {
+  /* ===== GLASSMORPHISM UTILITIES ===== */
+  .glass {
+    @apply bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 dark:border-white/10;
+  }
+
+  .glass-strong {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/30 dark:border-white/15;
+  }
+
+  .glass-subtle {
+    @apply bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg border border-white/15 dark:border-white/8;
+  }
+
+  .glass-purple {
+    @apply bg-primary/20 dark:bg-primary/30 backdrop-blur-xl border border-primary/30 dark:border-primary/40;
+  }
+
+  .glass-card {
+    @apply glass rounded-2xl shadow-lg shadow-primary/5;
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02] hover:bg-white/70 dark:hover:bg-slate-900/70;
+  }
+
+  /* ===== PREMIUM NAVBAR ===== */
+  .glass-navbar {
+    @apply sticky top-0 z-50;
+    @apply bg-primary/85 dark:bg-primary/90 backdrop-blur-2xl;
+    @apply border-b border-white/20 dark:border-white/10;
+    @apply shadow-lg shadow-primary/20;
+  }
+
+  .glass-navbar-light {
+    @apply sticky top-0 z-50;
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl;
+    @apply border-b border-primary/10 dark:border-primary/20;
+    @apply shadow-lg shadow-primary/5;
+  }
+
+  /* ===== GRADIENT BACKGROUNDS ===== */
+  .gradient-premium {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.15) 0%,
+      hsl(var(--tertiary) / 0.1) 50%,
+      hsl(var(--primary) / 0.05) 100%
+    );
+  }
+
+  .gradient-hero {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.08) 0%,
+      hsl(var(--background)) 100%
+    );
+  }
+
+  .gradient-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .gradient-glow::before {
+    content: '';
+    @apply absolute -inset-1 rounded-3xl opacity-30 blur-2xl;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--tertiary)));
+    z-index: -1;
+  }
+
+  /* ===== YOUTHFUL ACCENT ELEMENTS ===== */
+  .accent-dot {
+    @apply w-2 h-2 rounded-full bg-primary animate-pulse;
+  }
+
+  .accent-ring {
+    @apply ring-2 ring-primary/30 ring-offset-2 ring-offset-background;
+  }
+
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 50%,
+      transparent 100%
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
   /* Material 3 State Layer */
   .state-layer {
     @apply relative overflow-hidden;
@@ -263,10 +362,10 @@
     @apply w-auto px-4 gap-2;
   }
 
-  /* Material 3 Bottom Navigation */
+  /* Material 3 Bottom Navigation - Updated with glass */
   .bottom-nav {
     @apply fixed bottom-0 left-0 right-0 z-50;
-    @apply bg-surface-container-low border-t border-outline-variant;
+    @apply glass-purple;
     @apply flex items-center justify-around;
     @apply h-20 px-2;
     @apply safe-area-bottom;
@@ -275,12 +374,12 @@
   .bottom-nav-item {
     @apply flex flex-col items-center justify-center;
     @apply min-w-[64px] h-full py-2;
-    @apply text-on-surface-variant;
+    @apply text-white/80;
     @apply transition-colors duration-200;
   }
 
   .bottom-nav-item.active {
-    @apply text-primary;
+    @apply text-white;
   }
 
   .bottom-nav-item .indicator {
@@ -290,7 +389,7 @@
   }
 
   .bottom-nav-item.active .indicator {
-    @apply bg-secondary-container;
+    @apply bg-white/20;
   }
 
   /* Safe area for bottom navigation */
@@ -302,20 +401,19 @@
     padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
   }
 
-  /* Material 3 Top App Bar */
+  /* Material 3 Top App Bar - Updated with glass */
   .top-app-bar {
-    @apply sticky top-0 z-40;
-    @apply bg-surface;
+    @apply glass-navbar;
     @apply flex items-center gap-2;
     @apply h-16 px-4;
-    @apply border-b border-outline-variant;
+    @apply text-white;
   }
 
   /* Pull to refresh indicator */
   .pull-indicator {
     @apply flex items-center justify-center;
     @apply w-10 h-10 rounded-full;
-    @apply bg-surface-container-high;
+    @apply glass;
     @apply shadow-md;
     @apply transition-transform duration-200;
   }
@@ -325,7 +423,7 @@
     @apply flex items-center gap-4 px-4 py-3;
     @apply min-h-[56px];
     @apply transition-colors duration-150;
-    @apply active:bg-surface-variant/50;
+    @apply active:bg-primary/10;
   }
 
   /* Swipe action background */
@@ -341,6 +439,21 @@
 
   .swipe-action-bg.archive {
     @apply bg-primary left-0;
+  }
+
+  /* ===== PREMIUM SECTION HEADERS ===== */
+  .section-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .section-title {
+    @apply text-title-large font-bold text-foreground;
+    @apply flex items-center gap-2;
+  }
+
+  .section-title::before {
+    content: '';
+    @apply w-1 h-6 rounded-full bg-primary;
   }
 }
 

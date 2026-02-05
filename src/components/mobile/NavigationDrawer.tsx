@@ -122,33 +122,33 @@ const NavigationDrawer = ({ open, onOpenChange }: NavigationDrawerProps) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[300px] p-0 bg-surface">
+      <SheetContent side="left" className="w-[300px] p-0 glass-strong border-r-0">
         {/* Header with profile */}
         <SheetHeader className="p-4 pb-0">
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-surface-container-high">
-            <Avatar className="h-12 w-12">
+          <div className="flex items-center gap-3 p-4 rounded-xl glass-purple">
+            <Avatar className="h-12 w-12 ring-2 ring-white/30">
               <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
                 {profile?.full_name ? getInitials(profile.full_name) : 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-title-medium truncate">{profile?.full_name || 'User'}</p>
-              <Badge variant="secondary" className="mt-1 text-label-small">
+              <p className="text-title-medium truncate font-semibold">{profile?.full_name || 'User'}</p>
+              <Badge variant="secondary" className="mt-1 text-label-small bg-primary/20 text-primary border-0">
                 {role || 'Ambassador'}
               </Badge>
             </div>
           </div>
         </SheetHeader>
 
-        <Separator className="my-2" />
+        <Separator className="my-2 bg-white/10" />
 
         {/* Navigation */}
         <ScrollArea className="flex-1 h-[calc(100vh-180px)]">
           <nav className="px-2 py-2">
             {filteredNavigation.map((group, groupIndex) => (
               <div key={group.title} className={cn(groupIndex > 0 && 'mt-4')}>
-                <p className="text-label-medium text-on-surface-variant px-4 py-2 uppercase tracking-wider">
+                <p className="text-label-medium text-primary/70 px-4 py-2 uppercase tracking-wider font-semibold">
                   {group.title}
                 </p>
                 <ul className="space-y-0.5">
@@ -159,15 +159,15 @@ const NavigationDrawer = ({ open, onOpenChange }: NavigationDrawerProps) => {
                         <button
                           onClick={() => handleNavigate(item.path)}
                           className={cn(
-                            'w-full flex items-center gap-3 px-4 py-3 rounded-full text-body-large transition-colors',
+                            'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-body-large transition-all',
                             isActive
-                              ? 'bg-secondary-container text-secondary-container-foreground'
-                              : 'text-foreground hover:bg-surface-variant active:bg-surface-variant'
+                              ? 'glass-purple text-primary font-semibold'
+                              : 'text-foreground hover:bg-primary/5 active:bg-primary/10'
                           )}
                         >
-                          <item.icon className="h-6 w-6" />
+                          <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
                           <span className="flex-1 text-left">{item.label}</span>
-                          {isActive && <ChevronRight className="h-5 w-5" />}
+                          {isActive && <ChevronRight className="h-5 w-5 text-primary" />}
                         </button>
                       </li>
                     );
@@ -179,7 +179,7 @@ const NavigationDrawer = ({ open, onOpenChange }: NavigationDrawerProps) => {
         </ScrollArea>
 
         {/* Footer */}
-        <div className="p-4 border-t border-outline-variant">
+        <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-2 justify-center">
             <Globe className="h-4 w-4 text-primary" />
             <span className="text-label-small text-muted-foreground">GYLF © 2025</span>

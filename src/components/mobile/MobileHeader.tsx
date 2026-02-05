@@ -36,19 +36,19 @@ const MobileHeader = ({ title, onMenuClick }: MobileHeaderProps) => {
   };
 
   return (
-    <header className="top-app-bar">
+    <header className="glass-navbar">
       {/* Leading navigation icon */}
       <Button
         variant="ghost"
         size="icon"
-        className="touch-target rounded-full"
+        className="touch-target rounded-full text-white hover:bg-white/20"
         onClick={onMenuClick}
       >
         <Menu className="h-6 w-6" />
       </Button>
 
       {/* Title */}
-      <h1 className="flex-1 text-title-large truncate">
+      <h1 className="flex-1 text-title-large truncate text-white">
         {title || 'GYLF Portal'}
       </h1>
 
@@ -58,30 +58,31 @@ const MobileHeader = ({ title, onMenuClick }: MobileHeaderProps) => {
         <Button
           variant="ghost"
           size="icon"
-          className="touch-target rounded-full relative"
+          className="touch-target rounded-full relative text-white hover:bg-white/20"
           onClick={() => navigate('/dashboard/notifications')}
         >
           <Bell className="h-6 w-6" />
+          <span className="absolute top-2 right-2 h-2 w-2 bg-tertiary rounded-full ring-2 ring-primary" />
         </Button>
 
         {/* Profile Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/20">
+              <Avatar className="h-10 w-10 ring-2 ring-white/30">
                 <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-white/20 text-white font-semibold">
                   {profile?.full_name ? getInitials(profile.full_name) : 'U'}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
+          <DropdownMenuContent className="w-56 glass-strong" align="end">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
                 <p className="text-title-medium">{profile?.full_name || 'User'}</p>
                 <p className="text-body-small text-muted-foreground">{user?.email}</p>
-                <p className="text-label-small text-accent-foreground capitalize">{role || 'Ambassador'}</p>
+                <p className="text-label-small text-primary capitalize font-medium">{role || 'Ambassador'}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
