@@ -333,7 +333,6 @@ const GYLFMeetings = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ESP">Espees</SelectItem>
                       <SelectItem value="USD">USD</SelectItem>
                       <SelectItem value="NGN">NGN</SelectItem>
                       <SelectItem value="GBP">GBP</SelectItem>

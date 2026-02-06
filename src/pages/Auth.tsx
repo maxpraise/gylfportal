@@ -3,19 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, Eye, EyeOff, User, Lock, UserPlus, KeyRound, CheckCircle } from 'lucide-react';
+import { Globe, Users, TrendingUp, Shield, ArrowLeft, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import gylfLogo from '@/assets/gylf-logo.png';
-import { loginWithKingschat } from '@/lib/kingschatAuth';
-import kingschatIcon from '@/assets/kingschat-icon.png';
-
-// Import custom fonts
-import '@fontsource/outfit/900.css';
-import '@fontsource/plus-jakarta-sans/500.css';
-import '@fontsource/plus-jakarta-sans/700.css';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -32,22 +27,7 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const resetPasswordSchema = z.object({
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset';
 type SignupStep = 'form' | 'otp' | 'creating';
-
-// Glassmorphism card class
-const glassCard = "bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 rounded-[1.5rem]";
-
-// Input styling - clean white background with subtle depth
-const glassInput = "bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 rounded-[1rem] h-14 px-5 text-foreground placeholder:text-slate-400 focus:ring-2 focus:ring-primary/30 focus:border-primary/30 font-['Plus_Jakarta_Sans'] font-medium shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.12)]";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -55,14 +35,6 @@ const Auth = () => {
   const { user, signIn, signUp, isLoading } = useAuth();
   const { toast } = useToast();
   
-  // Check for reset token in URL
-  const resetToken = searchParams.get('token');
-  const modeParam = searchParams.get('mode');
-  
-  const [authMode, setAuthMode] = useState<AuthMode>(() => {
-    if (modeParam === 'reset' && resetToken) return 'reset';
-    return 'signin';
-  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -70,22 +42,16 @@ const Auth = () => {
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // OTP state
   const [signupStep, setSignupStep] = useState<SignupStep>('form');
   const [otpValue, setOtpValue] = useState('');
   const [otpError, setOtpError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
-  
-  // Password reset state
-  const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
 
   useEffect(() => {
     if (user && !isLoading) {
-      navigate('/home');
+      navigate('/dashboard');
     }
   }, [user, isLoading, navigate]);
 
@@ -96,37 +62,6 @@ const Auth = () => {
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
-
-  const [isKingschatLoading, setIsKingschatLoading] = useState(false);
-
-  const handleKingschatLogin = async () => {
-    setIsKingschatLoading(true);
-    try {
-      const result = await loginWithKingschat();
-      
-      if (result.success) {
-        toast({
-          title: 'Welcome!',
-          description: 'Successfully signed in with Kingschat.',
-        });
-        // Navigation will happen automatically via auth state change
-      } else {
-        toast({
-          title: 'Kingschat Login Failed',
-          description: result.error || 'Please try again.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Kingschat Login Failed',
-        description: error.message || 'An unexpected error occurred.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsKingschatLoading(false);
-    }
-  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,6 +163,7 @@ const Auth = () => {
       if (data.verified) {
         setSignupStep('creating');
         
+        // Now create the account
         const { error: signUpError } = await signUp(email, password, fullName, referralCode || undefined);
         
         if (signUpError) {
@@ -266,638 +202,292 @@ const Auth = () => {
     setOtpError('');
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    
-    const emailValidation = z.string().email('Please enter a valid email address').safeParse(email);
-    if (!emailValidation.success) {
-      setErrors({ email: 'Please enter a valid email address' });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email },
-      });
-
-      if (error) throw error;
-
-      setResetEmailSent(true);
-      toast({
-        title: 'Reset Link Sent',
-        description: 'If an account exists with this email, you will receive a password reset link.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to Send Reset Link',
-        description: error.message || 'Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-
-    const validation = resetPasswordSchema.safeParse({ password, confirmPassword });
-    if (!validation.success) {
-      const fieldErrors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          fieldErrors[err.path[0] as string] = err.message;
-        }
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('reset-password', {
-        body: { token: resetToken, newPassword: password },
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        setPasswordResetSuccess(true);
-        toast({
-          title: 'Password Updated',
-          description: 'Your password has been reset successfully. You can now sign in.',
-        });
-      } else {
-        throw new Error(data.error || 'Failed to reset password');
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Reset Failed',
-        description: error.message || 'Please try again or request a new reset link.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const switchMode = (mode: AuthMode) => {
-    setAuthMode(mode);
-    setErrors({});
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setFullName('');
-    setResetEmailSent(false);
-    setPasswordResetSuccess(false);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[hsl(200,80%,90%)] via-[hsl(200,70%,95%)] to-[hsl(200,60%,98%)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-600 font-['Plus_Jakarta_Sans'] font-medium">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Sky blue gradient background
-  const bgGradient = "bg-gradient-to-b from-[hsl(200,80%,90%)] via-[hsl(200,70%,95%)] to-[hsl(200,60%,98%)]";
-
-  // OTP Verification Screen
-  if (signupStep === 'otp') {
-    return (
-      <div className={`min-h-screen ${bgGradient} flex flex-col`}>
-        {/* Top App Bar */}
-        <header className="flex items-center gap-2 h-16 px-4">
-          <button
-            onClick={handleBackToForm}
-            className="p-2 -ml-2 rounded-full hover:bg-white/30 transition-colors touch-target"
-          >
-            <ArrowLeft className="h-6 w-6 text-slate-700" />
-          </button>
-          <h1 className="text-title-large flex-1 font-['Plus_Jakarta_Sans'] font-bold text-slate-800">Verify Email</h1>
-        </header>
-
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-safe-nav">
-          <div className={`w-full max-w-sm ${glassCard} p-8 space-y-8`}>
-            {/* Icon */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <Mail className="h-10 w-10 text-primary" />
-              </div>
-              <div className="text-center space-y-1">
-                <h2 className="text-headline-small font-['Outfit'] font-black uppercase italic tracking-tighter text-slate-800">Check your email</h2>
-                <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
-                  We sent a verification code to
-                </p>
-                <p className="font-['Plus_Jakarta_Sans'] font-bold text-slate-800">{email}</p>
-              </div>
-            </div>
-
-            {/* OTP Input */}
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={6}
-                value={otpValue}
-                onChange={(value) => {
-                  setOtpValue(value);
-                  setOtpError('');
-                }}
-                className="gap-2"
-              >
-                <InputOTPGroup className="gap-2">
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <InputOTPSlot 
-                      key={index} 
-                      index={index} 
-                      className="w-12 h-14 text-xl rounded-xl border-0 bg-white/80 focus:ring-2 focus:ring-primary/30 font-['Plus_Jakarta_Sans'] font-bold"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-
-            {otpError && (
-              <p className="text-body-small text-destructive text-center font-['Plus_Jakarta_Sans']">{otpError}</p>
-            )}
-
-            {/* Verify Button */}
-            <Button 
-              onClick={handleVerifyOTP}
-              className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg"
-              disabled={isSubmitting || otpValue.length !== 6}
-            >
-              {isSubmitting ? 'Verifying...' : 'Verify & Create Account'}
-            </Button>
-
-            {/* Resend */}
-            <div className="text-center">
-              <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
-                Didn't receive the code?{' '}
-                {resendCooldown > 0 ? (
-                  <span className="text-slate-800 font-bold">Resend in {resendCooldown}s</span>
-                ) : (
-                  <button
-                    onClick={handleResendOTP}
-                    className="text-primary font-bold hover:underline"
-                    disabled={isSubmitting}
-                  >
-                    Resend
-                  </button>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Creating Account Screen
-  if (signupStep === 'creating') {
-    return (
-      <div className={`min-h-screen ${bgGradient} flex flex-col items-center justify-center px-6`}>
-        <div className={`${glassCard} p-8 flex flex-col items-center gap-6`}>
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <div className="text-center space-y-2">
-            <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Creating your account</h2>
-            <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">Please wait a moment...</p>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen ${bgGradient} flex flex-col`}>
-      {/* Header with Logo */}
-      <div className="flex flex-col items-center pt-12 pb-6 px-6">
-        <img src={gylfLogo} alt="GYLF" className="w-24 h-24 mb-6 drop-shadow-lg" />
-        <h1 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-4xl text-[hsl(220,80%,50%)]">GYLF</h1>
-        <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-3xl text-slate-800 -mt-1">MOBILE</h2>
-        <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-500 mt-3 tracking-widest text-xs uppercase">
-          Empowering Youth for Global Impact
-        </p>
-      </div>
-
-      {/* Form Container */}
-      <div className="flex-1 px-6 pb-safe-nav">
-        <div className="w-full max-w-sm mx-auto space-y-6">
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left Panel - Branding */}
+      <div className="lg:w-1/2 bg-primary p-8 lg:p-12 flex flex-col justify-center text-primary-foreground">
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <Globe className="h-10 w-10" />
+            <div>
+              <h1 className="text-2xl font-bold">Global Youth Leaders&apos; Forum</h1>
+              <p className="text-sm opacity-80">Raising Leaders, building the future...</p>
+            </div>
+          </div>
           
-          {authMode === 'signin' ? (
-            <>
-              {/* Kingschat Login Button */}
-              <Button
-                type="button"
-                onClick={handleKingschatLogin}
-                disabled={isKingschatLoading}
-                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3 disabled:opacity-70"
-              >
-                {isKingschatLoading ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <img src={kingschatIcon} alt="Kingschat" className="h-6 w-6 object-contain" />
-                )}
-                {isKingschatLoading ? 'Connecting...' : 'Login with Kingschat'}
-              </Button>
-
-              {/* Divider */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-slate-300" />
-                <span className="font-['Plus_Jakarta_Sans'] font-medium text-slate-400 text-sm tracking-widest uppercase">Or use email</span>
-                <div className="flex-1 h-px bg-slate-300" />
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            Welcome to the GYLF Ambassador Portal
+          </h2>
+          
+          <p className="text-lg opacity-90 mb-8">
+            Join thousands of young leaders making a difference in their communities worldwide.
+          </p>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary-foreground/20 p-3 rounded-lg">
+                <Users className="h-6 w-6" />
               </div>
-
-              {/* Glass Card Form */}
-              <div className={`${glassCard} p-6`}>
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  {/* Email Field */}
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="EMAIL ADDRESS"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`${glassInput} ${errors.email ? 'ring-2 ring-destructive/50' : ''}`}
-                    />
-                    {errors.email && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.email}</p>
-                    )}
-                  </div>
-
-                  {/* Password Field */}
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="PASSWORD"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className={`${glassInput} pr-12 ${errors.password ? 'ring-2 ring-destructive/50' : ''}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
-                    </div>
-                    {errors.password && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.password}</p>
-                    )}
-                  </div>
-
-                  {/* Forgot Password Link */}
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => switchMode('forgot')}
-                      className="text-body-small text-primary font-['Plus_Jakarta_Sans'] font-bold hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-
-                  {/* Sign In Button */}
-                  <Button 
-                    type="submit" 
-                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Signing in...' : 'Enter Mobile App'}
-                  </Button>
-                </form>
+              <div>
+                <h3 className="font-semibold">Build Your Network</h3>
+                <p className="text-sm opacity-80">Connect with leaders globally</p>
               </div>
-
-              {/* Switch to Sign Up */}
-              <div className="text-center pt-2">
-                <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('signup')}
-                    className="text-primary font-bold hover:underline"
-                  >
-                    Sign Up
-                  </button>
-                </p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-primary-foreground/20 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6" />
               </div>
-            </>
-          ) : authMode === 'forgot' ? (
-            /* Forgot Password Form */
-            resetEmailSent ? (
-              <div className={`${glassCard} p-8 space-y-6 text-center`}>
+              <div>
+                <h3 className="font-semibold">Grow Your Impact</h3>
+                <p className="text-sm opacity-80">Track your leadership journey</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-primary-foreground/20 p-3 rounded-lg">
+                <Shield className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Access Resources</h3>
+                <p className="text-sm opacity-80">Exclusive leadership materials</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Right Panel - Auth Forms */}
+      <div className="lg:w-1/2 p-8 lg:p-12 flex items-center justify-center bg-background">
+        <Card className="w-full max-w-md border-border">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-foreground">GYLF Portal</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              {signupStep === 'otp' 
+                ? 'Enter the verification code sent to your email'
+                : signupStep === 'creating'
+                ? 'Creating your account...'
+                : 'Sign in to your account or create a new one'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {signupStep === 'otp' ? (
+              <div className="space-y-6">
+                <button
+                  onClick={handleBackToForm}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </button>
+                
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Mail className="h-10 w-10 text-primary" />
+                  <div className="bg-primary/10 p-4 rounded-full">
+                    <Mail className="h-8 w-8 text-primary" />
                   </div>
-                  <div className="space-y-2">
-                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Check your email</h2>
-                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
-                      We've sent a password reset link to
-                    </p>
-                    <p className="font-['Plus_Jakarta_Sans'] font-bold text-slate-800">{email}</p>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">We sent a code to</p>
+                    <p className="font-medium text-foreground">{email}</p>
                   </div>
                 </div>
                 
-                <p className="text-body-small font-['Plus_Jakarta_Sans'] text-slate-500">
-                  Didn't receive the email? Check your spam folder or try again.
-                </p>
-
-                <Button 
-                  variant="outline"
-                  className="w-full h-14 rounded-[1rem] border-2 border-slate-300 font-['Outfit'] font-black uppercase italic tracking-tighter"
-                  onClick={() => switchMode('signin')}
-                >
-                  Back to Sign In
-                </Button>
-              </div>
-            ) : (
-              <div className={`${glassCard} p-6`}>
-                <form onSubmit={handleForgotPassword} className="space-y-5">
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <KeyRound className="h-8 w-8 text-primary" />
-                    </div>
-                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Forgot Password?</h2>
-                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600 mt-2">
-                      Enter your email and we'll send you a reset link
-                    </p>
-                  </div>
-
-                  {/* Email Field */}
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="EMAIL ADDRESS"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`${glassInput} ${errors.email ? 'ring-2 ring-destructive/50' : ''}`}
-                    />
-                    {errors.email && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg" 
-                    disabled={isSubmitting}
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpValue}
+                    onChange={(value) => {
+                      setOtpValue(value);
+                      setOtpError('');
+                    }}
                   >
-                    {isSubmitting ? 'Sending...' : 'Send Reset Link'}
-                  </Button>
-
-                  <div className="text-center pt-4">
-                    <button
-                      type="button"
-                      onClick={() => switchMode('signin')}
-                      className="font-['Plus_Jakarta_Sans'] font-bold text-primary hover:underline inline-flex items-center gap-2"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Back to Sign In
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )
-          ) : authMode === 'reset' ? (
-            /* Reset Password Form */
-            passwordResetSuccess ? (
-              <div className={`${glassCard} p-8 space-y-6 text-center`}>
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle className="h-10 w-10 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Password Reset!</h2>
-                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
-                      Your password has been updated successfully.
-                    </p>
-                  </div>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
                 </div>
-
+                
+                {otpError && (
+                  <p className="text-sm text-destructive text-center">{otpError}</p>
+                )}
+                
                 <Button 
-                  className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg"
-                  onClick={() => switchMode('signin')}
+                  onClick={handleVerifyOTP}
+                  className="w-full"
+                  disabled={isSubmitting || otpValue.length !== 6}
                 >
-                  Sign In
+                  {isSubmitting ? 'Verifying...' : 'Verify & Create Account'}
                 </Button>
+                
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Didn't receive the code?{' '}
+                    {resendCooldown > 0 ? (
+                      <span className="text-foreground">Resend in {resendCooldown}s</span>
+                    ) : (
+                      <button
+                        onClick={handleResendOTP}
+                        className="text-primary hover:underline font-medium"
+                        disabled={isSubmitting}
+                      >
+                        Resend
+                      </button>
+                    )}
+                  </p>
+                </div>
+              </div>
+            ) : signupStep === 'creating' ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Creating your account...</p>
               </div>
             ) : (
-              <div className={`${glassCard} p-6`}>
-                <form onSubmit={handleResetPassword} className="space-y-5">
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Lock className="h-8 w-8 text-primary" />
-                    </div>
-                    <h2 className="font-['Outfit'] font-black uppercase italic tracking-tighter text-xl text-slate-800">Create New Password</h2>
-                    <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600 mt-2">
-                      Enter your new password below
-                    </p>
-                  </div>
-
-                  {/* New Password Field */}
-                  <div className="space-y-2">
-                    <div className="relative">
+              <Tabs defaultValue="signin">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="signin">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
                       <Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="NEW PASSWORD"
+                        id="signin-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={errors.email ? 'border-destructive' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <Input
+                        id="signin-password"
+                        type="password"
+                        placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className={`${glassInput} pr-12 ${errors.password ? 'ring-2 ring-destructive/50' : ''}`}
+                        className={errors.password ? 'border-destructive' : ''}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password}</p>
+                      )}
                     </div>
-                    {errors.password && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.password}</p>
-                    )}
-                  </div>
-
-                  {/* Confirm Password Field */}
-                  <div className="space-y-2">
-                    <div className="relative">
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUpInitiate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
                       <Input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="CONFIRM PASSWORD"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={`${glassInput} pr-12 ${errors.confirmPassword ? 'ring-2 ring-destructive/50' : ''}`}
+                        id="signup-name"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className={errors.fullName ? 'border-destructive' : ''}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                      {errors.fullName && (
+                        <p className="text-sm text-destructive">{errors.fullName}</p>
+                      )}
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.confirmPassword}</p>
-                    )}
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Updating...' : 'Update Password'}
-                  </Button>
-                </form>
-              </div>
-            )
-          ) : (
-            /* Sign Up Form */
-            <>
-              {/* Kingschat Signup Button */}
-              <Button
-                type="button"
-                onClick={handleKingschatLogin}
-                disabled={isKingschatLoading}
-                className="w-full h-14 rounded-[1rem] bg-[hsl(200,70%,55%)] hover:bg-[hsl(200,70%,50%)] text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg flex items-center justify-center gap-3 disabled:opacity-70"
-              >
-                {isKingschatLoading ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <img src={kingschatIcon} alt="Kingschat" className="h-6 w-6 object-contain" />
-                )}
-                {isKingschatLoading ? 'Connecting...' : 'Sign up with Kingschat'}
-              </Button>
-
-              {/* Divider */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-slate-300" />
-                <span className="font-['Plus_Jakarta_Sans'] font-medium text-slate-400 text-sm tracking-widest uppercase">Or use email</span>
-                <div className="flex-1 h-px bg-slate-300" />
-              </div>
-
-              <div className={`${glassCard} p-6`}>
-                <form onSubmit={handleSignUpInitiate} className="space-y-4">
-                  {/* Full Name Field */}
-                  <div className="space-y-2">
-                    <Input
-                      type="text"
-                      placeholder="FULL NAME"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className={`${glassInput} ${errors.fullName ? 'ring-2 ring-destructive/50' : ''}`}
-                    />
-                    {errors.fullName && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.fullName}</p>
-                    )}
-                  </div>
-
-                  {/* Email Field */}
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="EMAIL ADDRESS"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`${glassInput} ${errors.email ? 'ring-2 ring-destructive/50' : ''}`}
-                    />
-                    {errors.email && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.email}</p>
-                    )}
-                  </div>
-
-                  {/* Password Field */}
-                  <div className="space-y-2">
-                    <div className="relative">
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
                       <Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="PASSWORD"
+                        id="signup-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={errors.email ? 'border-destructive' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className={`${glassInput} pr-12 ${errors.password ? 'ring-2 ring-destructive/50' : ''}`}
+                        className={errors.password ? 'border-destructive' : ''}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password}</p>
+                      )}
                     </div>
-                    {errors.password && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.password}</p>
-                    )}
-                  </div>
-
-                  {/* Confirm Password Field */}
-                  <div className="space-y-2">
-                    <div className="relative">
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm">Confirm Password</Label>
                       <Input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="CONFIRM PASSWORD"
+                        id="signup-confirm"
+                        type="password"
+                        placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={`${glassInput} pr-12 ${errors.confirmPassword ? 'ring-2 ring-destructive/50' : ''}`}
+                        className={errors.confirmPassword ? 'border-destructive' : ''}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                      {errors.confirmPassword && (
+                        <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                      )}
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-body-small text-destructive font-['Plus_Jakarta_Sans']">{errors.confirmPassword}</p>
-                    )}
-                  </div>
-
-                  {/* Referral Code (Optional) */}
-                  <div className="space-y-2">
-                    <Input
-                      type="text"
-                      placeholder="REFERRAL CODE (OPTIONAL)"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value)}
-                      className={glassInput}
-                    />
-                  </div>
-
-                  {/* Sign Up Button */}
-                  <Button 
-                    type="submit" 
-                    className="w-full h-14 rounded-[1rem] bg-slate-900 hover:bg-slate-800 text-white font-['Outfit'] font-black uppercase italic tracking-tighter text-lg mt-2" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Sending verification...' : 'Continue'}
-                  </Button>
-                </form>
-              </div>
-
-              {/* Switch to Sign In */}
-              <div className="text-center pt-2">
-                <p className="font-['Plus_Jakarta_Sans'] font-medium text-slate-600">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('signin')}
-                    className="text-primary font-bold hover:underline"
-                  >
-                    Sign In
-                  </button>
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-referral">Referral Code (Optional)</Label>
+                      <Input
+                        id="signup-referral"
+                        type="text"
+                        placeholder="GYLF123ABC"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Sending Code...' : 'Continue'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

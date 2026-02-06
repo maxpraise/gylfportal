@@ -53,7 +53,7 @@ interface Region {
 }
 
 const ManageUsers = () => {
-  const { role, user } = useAuth();
+  const { role } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
@@ -137,18 +137,6 @@ const ManageUsers = () => {
       // Update role if changed
       const currentRole = getUserRole(editingUser.user_id);
       if (selectedRole && selectedRole !== currentRole) {
-        // Enforce role hierarchy:
-        // - Only admins can assign admin or regional_leader roles
-        // - Regional leaders can only assign ambassador role
-        if (role !== 'admin' && (selectedRole === 'admin' || selectedRole === 'regional_leader')) {
-          toast({
-            title: 'Access Denied',
-            description: 'Only admins can assign admin or regional leader roles.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
         // Delete existing role
         await supabase
           .from('user_roles')
@@ -159,7 +147,6 @@ const ManageUsers = () => {
         await supabase.from('user_roles').insert({
           user_id: editingUser.user_id,
           role: selectedRole as 'admin' | 'regional_leader' | 'ambassador',
-          assigned_by: user?.id,
         });
       }
 
