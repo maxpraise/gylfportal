@@ -374,12 +374,12 @@ const ManageUsers = () => {
                               </div>
                               <div className="space-y-2">
                                 <label className="text-sm font-medium">Region</label>
-                                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                                <Select value={selectedRegion || '__none__'} onValueChange={(val) => setSelectedRegion(val === '__none__' ? '' : val)}>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select region" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">Not Assigned</SelectItem>
+                                    <SelectItem value="__none__">Not Assigned</SelectItem>
                                     {regions.map((region) => (
                                       <SelectItem key={region.id} value={region.id}>
                                         {region.name}
