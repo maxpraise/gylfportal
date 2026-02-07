@@ -176,6 +176,54 @@ export type Database = {
           },
         ]
       }
+      course_progress: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          id: string
+          last_watched_at: string
+          profile_id: string
+          progress_percentage: number
+          started_at: string
+          watch_time_seconds: number
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          id?: string
+          last_watched_at?: string
+          profile_id: string
+          progress_percentage?: number
+          started_at?: string
+          watch_time_seconds?: number
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          id?: string
+          last_watched_at?: string
+          profile_id?: string
+          progress_percentage?: number
+          started_at?: string
+          watch_time_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       growth_paths: {
         Row: {
           badge_color: string | null
@@ -279,6 +327,100 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "heart_reports_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stream_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_live: boolean
+          stream_url: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_live?: boolean
+          stream_url: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_live?: boolean
+          stream_url?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          news_id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          news_id: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          news_id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_interactions: {
+        Row: {
+          created_at: string
+          id: string
+          interaction_type: string
+          news_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interaction_type: string
+          news_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          news_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_interactions_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -479,6 +621,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promo_banners: {
+        Row: {
+          created_at: string
+          external_link: string
+          id: string
+          image_url: string
+          is_active: boolean
+          order_index: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_link: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          order_index?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_link?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          order_index?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       quiz_attempts: {
         Row: {
@@ -691,6 +866,95 @@ export type Database = {
           },
         ]
       }
+      user_certificates: {
+        Row: {
+          certificate_number: string
+          course_id: string
+          earned_at: string
+          id: string
+          points_awarded: number
+          profile_id: string
+        }
+        Insert: {
+          certificate_number: string
+          course_id: string
+          earned_at?: string
+          id?: string
+          points_awarded?: number
+          profile_id: string
+        }
+        Update: {
+          certificate_number?: string
+          course_id?: string
+          earned_at?: string
+          id?: string
+          points_awarded?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_certificates_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_points: {
+        Row: {
+          courses_completed: number
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          profile_id: string
+          quizzes_passed: number
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          courses_completed?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          profile_id: string
+          quizzes_passed?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          courses_completed?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          profile_id?: string
+          quizzes_passed?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_points_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_by: string | null
@@ -715,11 +979,181 @@ export type Database = {
         }
         Relationships: []
       }
+      vod_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          profile_id: string
+          updated_at: string
+          video_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          updated_at?: string
+          video_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          updated_at?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vod_comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vod_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "vod_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vod_likes: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vod_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vod_likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "vod_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vod_videos: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          likes_count: number | null
+          published_at: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+          views_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url: string
+          views_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      vod_views: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string | null
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vod_views_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vod_views_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "vod_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_assign_role: {
+        Args: { _assigner_id: string; _target_role: string }
+        Returns: boolean
+      }
+      generate_certificate_number: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
       get_current_region_id: { Args: never; Returns: string }
